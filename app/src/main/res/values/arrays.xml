@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="entries_colorisation_preference">
+        <item>@string/altitude</item>
+        <item>@string/speed</item>
+        <item>@string/aircraft_type</item>
+        <!--item>@string/performance</item-->
+    </string-array>
+
+    <string-array name="entryvalues_colorisation_preference">
+        <item>@string/altitude</item>
+        <item>@string/speed</item>
+        <item>@string/aircraft_type</item>
+        <!--item>@string/performance</item-->
+    </string-array>
+
+    <string-array name="entries_symbol_preference">
+        <item>(default)</item>
+        <item>@string/aircraft_type</item>
+        <item>@string/flight_state</item>
+    </string-array>
+
+    <string-array name="entryvalues_symbol_preference">
+        <item>(default)</item>
+        <item>@string/aircraft_type</item>
+        <item>@string/flight_state</item>
+    </string-array>
+</resources>

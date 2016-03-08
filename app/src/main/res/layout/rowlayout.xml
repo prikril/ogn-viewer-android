@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+
+    <TextView
+        android:id="@+id/column_address"
+        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_weight="0.5"
+        android:text="DD4711"
+        android:textStyle="bold" >
+    </TextView>
+
+    <TextView
+        android:id="@+id/column_regNumber"
+        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_weight="0.5"
+        android:text="D-0815" >
+    </TextView>
+
+    <TextView
+        android:id="@+id/column_CN"
+        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_weight="0.3"
+        android:text="ABC" >
+    </TextView>
+
+    <TextView
+        android:id="@+id/column_model"
+        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:text="Arcus M" >
+    </TextView>
+
+    <TextView
+        android:id="@+id/column_owner"
+        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:text="BLVM" >
+    </TextView>
+
+</LinearLayout> 

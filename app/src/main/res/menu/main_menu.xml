@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:tools="http://schemas.android.com/tools"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    tools:context=".MapsActivity">
+    <item
+        android:id="@+id/action_aprsfilter"
+        android:title="@string/action_aprs_filter"
+        android:visible="false"/>
+
+    <item
+        android:id="@+id/action_settings"
+        android:title="@string/action_settings"/>
+
+    <item
+        android:id="@+id/action_manageids"
+        android:title="@string/action_manageids"/>
+
+    <item
+        android:id="@+id/action_currentlocation"
+        android:title="@string/action_currentlocation"/>
+
+    <item
+        android:id="@+id/action_about"
+        android:title="@string/action_about"
+        android:visible="false"/>
+    <item
+        android:id="@+id/action_exit"
+        android:title="@string/action_exit"/>
+</menu>

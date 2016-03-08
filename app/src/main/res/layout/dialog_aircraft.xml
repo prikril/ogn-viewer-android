@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView android:text="My Text"
+        android:id="@+id/title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+    </TextView>
+
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/editTextRegNumber"
+        android:layout_gravity="center_horizontal"
+        android:hint="@string/empty_registration_number" />
+
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/editTextCN"
+        android:layout_gravity="center_horizontal"
+        android:hint="@string/empty_competition_id" />
+
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/editTextOwner"
+        android:layout_gravity="center_horizontal"
+        android:hint="@string/empty_owner" />
+
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/editTextHomeBase"
+        android:layout_gravity="center_horizontal"
+        android:hint="@string/empty_home_base"
+        android:visibility="gone"/>
+
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/editTextModel"
+        android:layout_gravity="center_horizontal"
+        android:hint="@string/empty_model" />
+
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/editTextFreq"
+        android:layout_gravity="center_horizontal"
+        android:hint="@string/empty_frequency"
+        android:inputType="numberDecimal"
+        android:visibility="gone"/>
+
+    <Spinner
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/spinner"
+        android:layout_gravity="center_horizontal"
+        android:spinnerMode="dialog"
+        android:visibility="gone"/>
+
+</LinearLayout>

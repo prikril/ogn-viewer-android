@@ -1,0 +1,54 @@
+<PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory
+        android:title="APRS Server"
+        android:key="category_aprsserver_preference">
+
+        <EditTextPreference
+            android:key="@string/key_aprsfilter_preference"
+            android:title="@string/title_aprsfilter_preference"
+            android:summary="@string/summary_aprsfilter_preference"
+            android:dialogTitle="@string/dialog_title_aprsfilter_preference"
+            android:hint="@string/empty_aprsfilter_preference"
+            android:defaultValue=""/>
+
+    </PreferenceCategory>
+
+
+    <PreferenceCategory
+        android:title="Map Appearance"
+        android:key="category_appearance_preference">
+
+        <!--ListPreference
+            android:key="@string/key_symbol_preference"
+            android:title="@string/title_symbol_preference"
+            android:summary="@string/summary_symbol_preference"
+            android:entries="@array/entries_symbol_preference"
+            android:entryValues="@array/entryvalues_symbol_preference"
+            android:dialogTitle="@string/dialog_title_symbol_preference" /-->
+
+        <ListPreference
+            android:key="@string/key_colorisation_preference"
+            android:title="@string/title_colorisation_preference"
+            android:summary="@string/summary_colorisation_preference"
+            android:entries="@array/entries_colorisation_preference"
+            android:entryValues="@array/entryvalues_colorisation_preference"
+            android:dialogTitle="@string/dialog_title_colorisation_preference"
+            android:defaultValue="@string/altitude"/>
+
+        <CheckBoxPreference
+            android:key="@string/key_shownonmoving_preference"
+            android:title="@string/title_shownonmoving_preference"
+            android:summary="@string/summary_shownonmoving_preference"
+            android:defaultValue="true"/>
+
+        <CheckBoxPreference
+            android:key="@string/key_showreceivers_preference"
+            android:title="@string/title_showreceivers_preference"
+            android:summary="@string/summary_showreceivers_preference"
+            android:defaultValue="false"/>
+
+    </PreferenceCategory>
+
+</PreferenceScreen>

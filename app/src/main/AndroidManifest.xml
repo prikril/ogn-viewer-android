@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.meisterschueler.ognviewer" >
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <!--uses-permission android:name="com.google.android.providers.gsf.permission.READ_GSERVICES" /-->
+    <!--
+ The ACCESS_COARSE/FINE_LOCATION permissions are not required to use
+         Google Maps Android API v2, but are recommended.
+    -->
+    <!--uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" /-->
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@style/AppTheme" >
+        <meta-data
+            android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version" />
+        <meta-data
+            android:name="com.google.android.maps.v2.API_KEY"
+            android:value="@string/google_maps_key" />
+
+        <activity
+            android:name=".MapsActivity"
+            android:label="@string/title_activity_maps"
+            android:launchMode="singleTop">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name="com.meisterschueler.ognviewer.PrefsActivity"
+            android:label="Preferences">
+        </activity>
+        <activity
+            android:name="com.meisterschueler.ognviewer.ManageIDsActivity"
+            android:label="Manage IDs">
+        </activity>
+
+        <!-- Updating this will cause a database upgrade -->
+        <meta-data
+            android:name="Rush_db_version"
+            android:value="1" />
+
+        <!-- Database name -->
+        <meta-data
+            android:name="Rush_db_name"
+            android:value="rush.db" />
+
+        <!--
+        Setting this to true will cause a migration to happen every launch,
+        this is very handy during development although could cause data loss
+        -->
+        <meta-data
+            android:name="Rush_debug"
+            android:value="false" />
+
+        <!--
+        Setting this to true mean that tables will only be created of classes that
+        extend RushObject and are annotated with @RushTableAnnotation
+        -->
+        <meta-data
+            android:name="Rush_requires_table_annotation"
+            android:value="false" />
+
+        <!-- Turning on logging can be done by preferences this value to true -->
+        <meta-data
+            android:name="Rush_log"
+            android:value="false" />
+
+        <service
+            android:name=".OgnService">
+        </service>
+
+    </application>
+
+</manifest>
