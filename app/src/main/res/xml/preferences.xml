@@ -38,9 +38,9 @@
             android:defaultValue="@string/altitude"/>
 
         <CheckBoxPreference
-            android:key="@string/key_shownonmoving_preference"
-            android:title="@string/title_shownonmoving_preference"
-            android:summary="@string/summary_shownonmoving_preference"
+            android:key="@string/key_showaircrafts_preference"
+            android:title="@string/title_showaircrafts_preference"
+            android:summary="@string/summary_showaircrafts_preference"
             android:defaultValue="true"/>
 
         <CheckBoxPreference
@@ -48,6 +48,12 @@
             android:title="@string/title_showreceivers_preference"
             android:summary="@string/summary_showreceivers_preference"
             android:defaultValue="false"/>
+
+        <CheckBoxPreference
+            android:key="@string/key_shownonmoving_preference"
+            android:title="@string/title_shownonmoving_preference"
+            android:summary="@string/summary_shownonmoving_preference"
+            android:defaultValue="true"/>
 
     </PreferenceCategory>
 

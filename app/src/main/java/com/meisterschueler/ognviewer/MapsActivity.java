@@ -274,10 +274,26 @@ public class MapsActivity extends FragmentActivity {
             m.setPosition(new LatLng(lat, lon));
         }
 
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        Boolean showReceivers = sharedPreferences.getBoolean(getString(R.string.key_showreceivers_preference), false);
+
+        m.setVisible(showReceivers);
+
         m.setTitle(receiverName + " (" + altitude + "m)");
         m.setSnippet("Noise: " + recInputNoise + "dB");
 
         int color = Color.rgb(128, 255, 0);
+        if (recInputNoise < -3.0) {
+            color = Color.rgb(128, 128, 255);
+        } else if (recInputNoise < 0) {
+            color = Color.rgb(128, 255, 255);
+        } else if (recInputNoise < 3) {
+            color = Color.rgb(128, 255, 128);
+        } else if (recInputNoise < 10) {
+            color = Color.rgb(255, 255, 128);
+        } else {
+            color = Color.rgb(255, 128, 128);
+        }
 
         //m.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE));
         IconGenerator iconGenerator = new IconGenerator(this);
@@ -300,7 +316,7 @@ public class MapsActivity extends FragmentActivity {
     }
 
     private void updateAircraftBeaconMarker(AircraftBeacon aircraftBeacon, AircraftDescriptor aircraftDescriptor) {
-        boolean isOgnPrivate = (aircraftDescriptor.isKnown() && aircraftDescriptor.isTracked() && aircraftDescriptor.isIdentified()) || !aircraftDescriptor.isKnown();
+        boolean isOgnPrivate = !(aircraftDescriptor.isKnown() && aircraftDescriptor.isTracked() && aircraftDescriptor.isIdentified()) || !aircraftDescriptor.isKnown();
         updateAircraftBeaconMarker(aircraftBeacon.getAddress(), aircraftBeacon.getAircraftType(), aircraftBeacon.getClimbRate(), aircraftBeacon.getLat(), aircraftBeacon.getLon(), aircraftBeacon.getAlt(), aircraftBeacon.getGroundSpeed(), aircraftDescriptor.getRegNumber(), aircraftDescriptor.getCN(), aircraftDescriptor.getModel(), isOgnPrivate);
     }
 
@@ -319,9 +335,10 @@ public class MapsActivity extends FragmentActivity {
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         String symbol = sharedPreferences.getString(getString(R.string.key_symbol_preference), "(default)");
         String colorisation = sharedPreferences.getString(getString(R.string.key_colorisation_preference), getString(R.string.altitude));
+        Boolean showaircrafts = sharedPreferences.getBoolean(getString(R.string.key_showaircrafts_preference), true);
         Boolean shownonmoving = sharedPreferences.getBoolean(getString(R.string.key_shownonmoving_preference), true);
 
-        if (!shownonmoving && groundSpeed < 5 || !isOgnPrivate) {
+        if (!showaircrafts || !shownonmoving && groundSpeed < 5 || isOgnPrivate) {
             m.setVisible(false);
             return;
         } else {

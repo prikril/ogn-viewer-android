@@ -11,6 +11,7 @@
     <string name="action_about">About</string>
     <string name="action_exit">Exit</string>
 
+    <string name="empty_address">(no radio ID)</string>
     <string name="empty_registration_number">(no registration number)</string>
     <string name="empty_competition_id">(no competition ID)</string>
     <string name="empty_owner">(no owner)</string>
@@ -36,17 +37,23 @@
     <string name="summary_colorisation_preference">Altitude</string>
     <string name="dialog_title_colorisation_preference">Colorisation</string>
 
-    <string name="key_shownonmoving_preference">shownonmoving_preference</string>
-    <string name="title_shownonmoving_preference">Show Non-Moving</string>
-    <string name="summary_shownonmoving_preference">on</string>
+    <string name="key_showaircrafts_preference">showaircrafts_preference</string>
+    <string name="title_showaircrafts_preference">Show Aircrafts</string>
+    <string name="summary_showaircrafts_preference">on</string>
 
     <string name="key_showreceivers_preference">showreceivers_preference</string>
     <string name="title_showreceivers_preference">Show Receivers</string>
     <string name="summary_showreceivers_preference">off</string>
 
+    <string name="key_shownonmoving_preference">shownonmoving_preference</string>
+    <string name="title_shownonmoving_preference">Show Non-Moving</string>
+    <string name="summary_shownonmoving_preference">on</string>
+
     <string name="key_showstealth_preference">showstealth_preference</string>
     <string name="title_showstealth_preference">Show stealth</string>
     <string name="summary_showstealth_preference">off</string>
+
+    <string name="action_add_item">Export DB</string>
     <string name="action_export_db">Export DB</string>
     <string name="action_import_db">Import DB</string>
     <string name="action_delete_db">Clear DB</string>

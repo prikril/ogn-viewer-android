@@ -18,8 +18,9 @@ public class PrefsFragment extends PreferenceFragment implements SharedPreferenc
         updateASDF(sharedPreferences, getString(R.string.key_aprsfilter_preference));
         //updateASDF(sharedPreferences, getString(R.string.key_symbol_preference));
         updateASDF(sharedPreferences, getString(R.string.key_colorisation_preference));
-        updateASDF(sharedPreferences, getString(R.string.key_shownonmoving_preference));
+        updateASDF(sharedPreferences, getString(R.string.key_showaircrafts_preference));
         updateASDF(sharedPreferences, getString(R.string.key_showreceivers_preference));
+        updateASDF(sharedPreferences, getString(R.string.key_shownonmoving_preference));
     }
 
     @Override
@@ -57,8 +58,8 @@ public class PrefsFragment extends PreferenceFragment implements SharedPreferenc
         } else if (key.equals(getString(R.string.key_colorisation_preference))) {
             String value = sharedPreferences.getString(getString(R.string.key_colorisation_preference), getString(R.string.altitude));
             pref.setSummary(value);
-        } else if (key.equals(getString(R.string.key_shownonmoving_preference))) {
-            Boolean value = sharedPreferences.getBoolean(getString(R.string.key_shownonmoving_preference), true);
+        } else if (key.equals(getString(R.string.key_showaircrafts_preference))) {
+            Boolean value = sharedPreferences.getBoolean(getString(R.string.key_showaircrafts_preference), true);
             if (value) {
                 pref.setSummary("on");
             } else {
@@ -66,6 +67,13 @@ public class PrefsFragment extends PreferenceFragment implements SharedPreferenc
             }
         } else if (key.equals(getString(R.string.key_showreceivers_preference))) {
             Boolean value = sharedPreferences.getBoolean(getString(R.string.key_showreceivers_preference), false);
+            if (value) {
+                pref.setSummary("on");
+            } else {
+                pref.setSummary("off");
+            }
+        } else if (key.equals(getString(R.string.key_shownonmoving_preference))) {
+            Boolean value = sharedPreferences.getBoolean(getString(R.string.key_shownonmoving_preference), true);
             if (value) {
                 pref.setSummary("on");
             } else {

@@ -8,7 +8,7 @@ android {
         applicationId "com.meisterschueler.ognviewer"
         minSdkVersion 15
         targetSdkVersion 15
-        versionCode 15
+        versionCode 16
         versionName "1.2"
     }
     buildTypes {
@@ -30,7 +30,7 @@ dependencies {
     compile 'org.ogn:ogn-commons-java:1.0.0-SNAPSHOT'
     compile 'org.ogn:ogn-client-java:1.0.1-SNAPSHOT'
     //compile 'com.android.support:support-v4:22.2.0'
-    compile 'com.google.maps.android:android-maps-utils:0.3.4'
+    compile 'com.google.maps.android:android-maps-utils:0.4.3'
 
     testCompile 'junit:junit:4.12'
 }

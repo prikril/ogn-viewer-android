@@ -3,6 +3,9 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     tools:context=".ManageIDsActivity">
     <item
+        android:id="@+id/action_add_item"
+        android:title="@string/action_add_item"/>
+    <item
         android:id="@+id/action_export_db"
         android:title="@string/action_export_db"/>
 
