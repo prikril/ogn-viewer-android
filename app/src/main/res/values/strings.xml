@@ -65,4 +65,7 @@
     <string name="aircraft_type">Aircraft type</string>
     <string name="flight_state">Flight state</string>
 
+    <string name="key_latitude_preference">latitude_preference</string>
+    <string name="key_longitude_preference">longitude_preference</string>
+    <string name="key_zoom_preference">zoom_preference</string>
 </resources>

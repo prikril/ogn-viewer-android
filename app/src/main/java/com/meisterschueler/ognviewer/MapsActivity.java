@@ -462,6 +462,15 @@ public class MapsActivity extends FragmentActivity {
     protected void onPause() {
         super.onPause();
         unbindService(mConnection);
+
+        // Save current lat, lon, zoom
+        float lat = (float)mMap.getCameraPosition().target.latitude;
+        float lon = (float)mMap.getCameraPosition().target.longitude;
+        float zoom = mMap.getCameraPosition().zoom;
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        sharedPreferences.edit().putFloat(getString(R.string.key_latitude_preference), (float)lat).commit();
+        sharedPreferences.edit().putFloat(getString(R.string.key_longitude_preference), (float)lon).commit();
+        sharedPreferences.edit().putFloat(getString(R.string.key_zoom_preference), (float)zoom).commit();
     }
 
     @Override
@@ -470,6 +479,17 @@ public class MapsActivity extends FragmentActivity {
         bindService(new Intent(this, OgnService.class), mConnection, Context.BIND_AUTO_CREATE);
 
         checkSetUpMap();
+
+        // Restore lat, lon, zoom
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        float lat = sharedPreferences.getFloat(getString(R.string.key_latitude_preference), 0.0f);
+        float lon = sharedPreferences.getFloat(getString(R.string.key_longitude_preference), 0.0f);
+        float zoom = sharedPreferences.getFloat(getString(R.string.key_zoom_preference), 2.0f);
+        CameraPosition cameraPosition = new CameraPosition.Builder()
+                .target(new LatLng(lat, lon))
+                .zoom(zoom)
+                .build();
+        mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
     }
 
     @Override
