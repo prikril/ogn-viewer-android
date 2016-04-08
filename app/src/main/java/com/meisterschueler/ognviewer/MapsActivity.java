@@ -468,9 +468,9 @@ public class MapsActivity extends FragmentActivity {
         float lon = (float)mMap.getCameraPosition().target.longitude;
         float zoom = mMap.getCameraPosition().zoom;
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-        sharedPreferences.edit().putFloat(getString(R.string.key_latitude_preference), (float)lat).commit();
-        sharedPreferences.edit().putFloat(getString(R.string.key_longitude_preference), (float)lon).commit();
-        sharedPreferences.edit().putFloat(getString(R.string.key_zoom_preference), (float)zoom).commit();
+        sharedPreferences.edit().putFloat(getString(R.string.key_latitude_preference), lat).commit();
+        sharedPreferences.edit().putFloat(getString(R.string.key_longitude_preference), lon).commit();
+        sharedPreferences.edit().putFloat(getString(R.string.key_zoom_preference), zoom).commit();
     }
 
     @Override

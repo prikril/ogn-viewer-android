@@ -13,10 +13,4 @@ public class ManageIDsActivity extends Activity {
                 .replace(android.R.id.content, new ManageIDsFragment())
                 .commit();
     }
-
-    /*@Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.manageid_menu, menu);
-        return true;
-    }*/
 }

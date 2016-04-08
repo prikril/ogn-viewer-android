@@ -53,10 +53,7 @@
     <string name="title_showstealth_preference">Show stealth</string>
     <string name="summary_showstealth_preference">off</string>
 
-    <string name="action_add_item">Export DB</string>
-    <string name="action_export_db">Export DB</string>
-    <string name="action_import_db">Import DB</string>
-    <string name="action_delete_db">Clear DB</string>
+    <string name="action_add_item">Add item</string>
     <string name="notification_id">ogn_notification</string>
 
     <string name="altitude">Altitude</string>

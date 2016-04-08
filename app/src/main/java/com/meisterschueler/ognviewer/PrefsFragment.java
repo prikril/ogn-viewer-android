@@ -15,12 +15,12 @@ public class PrefsFragment extends PreferenceFragment implements SharedPreferenc
 
         SharedPreferences sharedPreferences = getPreferenceScreen().getSharedPreferences();
 
-        updateASDF(sharedPreferences, getString(R.string.key_aprsfilter_preference));
-        //updateASDF(sharedPreferences, getString(R.string.key_symbol_preference));
-        updateASDF(sharedPreferences, getString(R.string.key_colorisation_preference));
-        updateASDF(sharedPreferences, getString(R.string.key_showaircrafts_preference));
-        updateASDF(sharedPreferences, getString(R.string.key_showreceivers_preference));
-        updateASDF(sharedPreferences, getString(R.string.key_shownonmoving_preference));
+        updateFragmentValues(sharedPreferences, getString(R.string.key_aprsfilter_preference));
+        //updateFragmentValues(sharedPreferences, getString(R.string.key_symbol_preference));
+        updateFragmentValues(sharedPreferences, getString(R.string.key_colorisation_preference));
+        updateFragmentValues(sharedPreferences, getString(R.string.key_showaircrafts_preference));
+        updateFragmentValues(sharedPreferences, getString(R.string.key_showreceivers_preference));
+        updateFragmentValues(sharedPreferences, getString(R.string.key_shownonmoving_preference));
     }
 
     @Override
@@ -37,13 +37,13 @@ public class PrefsFragment extends PreferenceFragment implements SharedPreferenc
 
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-        updateASDF(sharedPreferences, key);
+        updateFragmentValues(sharedPreferences, key);
         if (key.equals(getString(R.string.key_aprsfilter_preference))) {
             getActivity().startService(new Intent(getActivity(), OgnService.class));
         }
     }
 
-    private void updateASDF(SharedPreferences sharedPreferences, String key) {
+    private void updateFragmentValues(SharedPreferences sharedPreferences, String key) {
         Preference pref = findPreference(key);
         if (key.equals(getString(R.string.key_aprsfilter_preference))) {
             String value = sharedPreferences.getString(getString(R.string.key_aprsfilter_preference), "");
