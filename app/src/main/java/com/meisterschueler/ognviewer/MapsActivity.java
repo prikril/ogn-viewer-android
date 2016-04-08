@@ -206,7 +206,7 @@ public class MapsActivity extends FragmentActivity {
                 boolean tracked = intent.getBooleanExtra("tracked", false);
                 boolean identified = intent.getBooleanExtra("identified", false);
 
-                boolean isOgnPrivate = (known && tracked && identified) || !known;
+                boolean isOgnPrivate = known && (!tracked || !identified);
                 updateAircraftBeaconMarker(address, aircraftType, climbRate, lat, lon, alt, (int) groundSpeed, regNumber, CN, model, isOgnPrivate);
             }
         };
@@ -316,7 +316,7 @@ public class MapsActivity extends FragmentActivity {
     }
 
     private void updateAircraftBeaconMarker(AircraftBeacon aircraftBeacon, AircraftDescriptor aircraftDescriptor) {
-        boolean isOgnPrivate = !(aircraftDescriptor.isKnown() && aircraftDescriptor.isTracked() && aircraftDescriptor.isIdentified()) || !aircraftDescriptor.isKnown();
+        boolean isOgnPrivate = aircraftDescriptor.isKnown() && (!aircraftDescriptor.isTracked() || !aircraftDescriptor.isIdentified());
         updateAircraftBeaconMarker(aircraftBeacon.getAddress(), aircraftBeacon.getAircraftType(), aircraftBeacon.getClimbRate(), aircraftBeacon.getLat(), aircraftBeacon.getLon(), aircraftBeacon.getAlt(), aircraftBeacon.getGroundSpeed(), aircraftDescriptor.getRegNumber(), aircraftDescriptor.getCN(), aircraftDescriptor.getModel(), isOgnPrivate);
     }
 
