@@ -237,18 +237,17 @@ public class MapsActivity extends FragmentActivity {
         LocalBroadcastManager.getInstance(this).registerReceiver((receiverReceiver), new IntentFilter("RECEIVER-BEACON"));
 
         if (savedInstanceState == null) {
-            /*SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-            String firstStart = "FIRST_APPLICATION_START";
-            String aprsFilter = sharedPreferences.getString(getString(R.string.key_aprsfilter_preference), firstStart);
-            if (aprsFilter.equals(firstStart)) {
+            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+            String aprsFilter = sharedPreferences.getString(getString(R.string.key_aprsfilter_preference), "");
+            if (aprsFilter.equals("")) {
                 LocationManager locManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
                 Location location = locManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
 
                 aprsFilter = latLngToAprsFilter(new LatLng(location.getLatitude(), location.getLongitude()));
-                sharedPreferences.edit().putString(getString(R.string.key_aprsfilter_preference), aprsFilter).commit();
-            }*/
-
-            startService(new Intent(getBaseContext(), OgnService.class));
+                editEmptyAprsFilter(aprsFilter);
+            } else {
+                startService(new Intent(getBaseContext(), OgnService.class));
+            }
         }
     }
 
@@ -564,17 +563,38 @@ public class MapsActivity extends FragmentActivity {
 
                         if (!aprsFilterModified.equals(aprsFilterSaved)) {
                             sharedPreferences.edit().putString(getString(R.string.key_aprsfilter_preference), aprsFilterModified).commit();
-
                             startService(new Intent(getBaseContext(), OgnService.class));
-
                             updateAprsFilterRange(aprsFilterModified);
                         }
                     }
                 })
-                .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+                .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener(){
                     @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        // cancel...
+                    public void onClick(DialogInterface dialog, int id) {
+                        // do nothing
+                    }
+                })
+                .show();
+    }
+
+    private void editEmptyAprsFilter(final String aprsFilter) {
+        View view = getLayoutInflater().inflate(R.layout.dialog_aprsfilter, null);
+        final EditText et = (EditText) view.findViewById(R.id.editTextOwner);
+        et.setText(aprsFilter);
+
+        new AlertDialog.Builder(this).setView(view)
+                .setTitle("Set APRS filter")
+                .setMessage("Caution: An empty APRS filter empty can make the app very very slow.")
+                .setCancelable(false)
+                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int id) {
+                        String aprsFilterModified = et.getText().toString();
+
+                        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+                        sharedPreferences.edit().putString(getString(R.string.key_aprsfilter_preference), aprsFilterModified).commit();
+                        startService(new Intent(getBaseContext(), OgnService.class));
+                        updateAprsFilterRange(aprsFilterModified);
                     }
                 })
                 .show();
