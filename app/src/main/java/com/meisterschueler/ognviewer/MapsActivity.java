@@ -241,10 +241,14 @@ public class MapsActivity extends FragmentActivity {
             String aprsFilter = sharedPreferences.getString(getString(R.string.key_aprsfilter_preference), "");
             if (aprsFilter.equals("")) {
                 LocationManager locManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-                Location location = locManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-
-                aprsFilter = latLngToAprsFilter(new LatLng(location.getLatitude(), location.getLongitude()));
+                if (locManager != null) {
+                    Location location = locManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+                    if (location != null) {
+                        aprsFilter = latLngToAprsFilter(new LatLng(location.getLatitude(), location.getLongitude()));
+                    }
+                }
                 editEmptyAprsFilter(aprsFilter);
+
             } else {
                 startService(new Intent(getBaseContext(), OgnService.class));
             }
@@ -552,7 +556,7 @@ public class MapsActivity extends FragmentActivity {
         et.setText(aprsFilter);
 
         new AlertDialog.Builder(this).setView(view)
-                .setTitle("Set APRS filter")
+                .setTitle(R.string.aprs_filter_title)
                 .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int id) {
@@ -583,8 +587,8 @@ public class MapsActivity extends FragmentActivity {
         et.setText(aprsFilter);
 
         new AlertDialog.Builder(this).setView(view)
-                .setTitle("Set APRS filter")
-                .setMessage("Caution: An empty APRS filter empty can make the app very very slow.")
+                .setTitle(R.string.aprs_filter_title)
+                .setMessage(R.string.empty_aprs_filter_message)
                 .setCancelable(false)
                 .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                     @Override
