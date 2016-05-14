@@ -1,17 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string-array name="entries_colorisation_preference">
+    <string-array name="entries_aircraft_colorisation_preference">
         <item>@string/altitude</item>
         <item>@string/speed</item>
         <item>@string/aircraft_type</item>
-        <!--item>@string/performance</item-->
     </string-array>
 
-    <string-array name="entryvalues_colorisation_preference">
+    <string-array name="entryvalues_aircraft_colorisation_preference">
         <item>@string/altitude</item>
         <item>@string/speed</item>
         <item>@string/aircraft_type</item>
-        <!--item>@string/performance</item-->
+    </string-array>
+
+    <string-array name="entries_receiver_colorisation_preference">
+        <item>@string/activity</item>
+        <item>@string/noise</item>
+    </string-array>
+
+    <string-array name="entryvalues_receiver_colorisation_preference">
+        <item>@string/activity</item>
+        <item>@string/noise</item>
     </string-array>
 
     <string-array name="entries_symbol_preference">

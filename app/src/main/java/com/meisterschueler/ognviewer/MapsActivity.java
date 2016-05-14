@@ -230,7 +230,10 @@ public class MapsActivity extends FragmentActivity {
                 float groundSpeed = intent.getFloatExtra("groundSpeed", 0);
                 String rawPacket = intent.getStringExtra("rawPacket");
 
-                updateReceiverBeaconMarker(id, lat, lon, alt, recInputNoise);
+                // Computed values
+                int counter = intent.getIntExtra("counter", 0);
+
+                updateReceiverBeaconMarker(id, lat, lon, alt, counter);
             }
         };
 
@@ -336,10 +339,10 @@ public class MapsActivity extends FragmentActivity {
         }
 
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-        String symbol = sharedPreferences.getString(getString(R.string.key_symbol_preference), "(default)");
-        String colorisation = sharedPreferences.getString(getString(R.string.key_colorisation_preference), getString(R.string.altitude));
+        String colorisation = sharedPreferences.getString(getString(R.string.key_aircraft_colorisation_preference), getString(R.string.altitude));
         Boolean showaircrafts = sharedPreferences.getBoolean(getString(R.string.key_showaircrafts_preference), true);
         Boolean shownonmoving = sharedPreferences.getBoolean(getString(R.string.key_shownonmoving_preference), true);
+        Boolean showregistration = sharedPreferences.getBoolean(getString(R.string.key_showregistration_preference), true);
 
         if (!showaircrafts || !shownonmoving && groundSpeed < 5 || isOgnPrivate) {
             m.setVisible(false);
@@ -424,7 +427,7 @@ public class MapsActivity extends FragmentActivity {
 
 
         // make icon
-        if (!colorisation.equals(getString(R.string.aircraft_type)) || ((regNumber == null || regNumber.isEmpty()) && (CN == null || CN.isEmpty()))) {
+        if (!showregistration || ((regNumber == null || regNumber.isEmpty()) && (CN == null || CN.isEmpty()))) {
             m.setIcon(BitmapDescriptorFactory.defaultMarker(hue));
         } else {
             String title;

@@ -20,23 +20,6 @@
         android:title="Map Appearance"
         android:key="category_appearance_preference">
 
-        <!--ListPreference
-            android:key="@string/key_symbol_preference"
-            android:title="@string/title_symbol_preference"
-            android:summary="@string/summary_symbol_preference"
-            android:entries="@array/entries_symbol_preference"
-            android:entryValues="@array/entryvalues_symbol_preference"
-            android:dialogTitle="@string/dialog_title_symbol_preference" /-->
-
-        <ListPreference
-            android:key="@string/key_colorisation_preference"
-            android:title="@string/title_colorisation_preference"
-            android:summary="@string/summary_colorisation_preference"
-            android:entries="@array/entries_colorisation_preference"
-            android:entryValues="@array/entryvalues_colorisation_preference"
-            android:dialogTitle="@string/dialog_title_colorisation_preference"
-            android:defaultValue="@string/altitude"/>
-
         <CheckBoxPreference
             android:key="@string/key_showaircrafts_preference"
             android:title="@string/title_showaircrafts_preference"
@@ -49,10 +32,52 @@
             android:summary="@string/summary_showreceivers_preference"
             android:defaultValue="false"/>
 
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="Aircraft"
+        android:key="category_appearance_preference">
+
         <CheckBoxPreference
             android:key="@string/key_shownonmoving_preference"
             android:title="@string/title_shownonmoving_preference"
             android:summary="@string/summary_shownonmoving_preference"
+            android:defaultValue="true"/>
+
+        <CheckBoxPreference
+            android:key="@string/key_showregistration_preference"
+            android:title="@string/title_showregistration_preference"
+            android:summary="@string/summary_showregistration_preference"
+            android:defaultValue="true"/>
+
+        <ListPreference
+            android:key="@string/key_aircraft_colorisation_preference"
+            android:title="@string/title_colorisation_preference"
+            android:summary="@string/summary_aircraft_colorisation_preference"
+            android:entries="@array/entries_aircraft_colorisation_preference"
+            android:entryValues="@array/entryvalues_aircraft_colorisation_preference"
+            android:dialogTitle="@string/dialog_title_colorisation_preference"
+            android:defaultValue="@string/altitude"/>
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="Receiver"
+        android:key="category_appearance_preference">
+
+        <ListPreference
+            android:key="@string/key_receiver_colorisation_preference"
+            android:title="@string/title_colorisation_preference"
+            android:summary="@string/summary_receiver_colorisation_preference"
+            android:entries="@array/entries_receiver_colorisation_preference"
+            android:entryValues="@array/entryvalues_receiver_colorisation_preference"
+            android:dialogTitle="@string/dialog_title_colorisation_preference"
+            android:defaultValue="@string/activity"/>
+
+        <CheckBoxPreference
+            android:key="@string/key_shownotactive_preference"
+            android:title="@string/title_shownotactive_preference"
+            android:summary="@string/summary_shownotactive_preference"
             android:defaultValue="true"/>
 
     </PreferenceCategory>

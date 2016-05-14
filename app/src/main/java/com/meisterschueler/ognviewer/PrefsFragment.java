@@ -16,11 +16,14 @@ public class PrefsFragment extends PreferenceFragment implements SharedPreferenc
         SharedPreferences sharedPreferences = getPreferenceScreen().getSharedPreferences();
 
         updateFragmentValues(sharedPreferences, getString(R.string.key_aprsfilter_preference));
-        //updateFragmentValues(sharedPreferences, getString(R.string.key_symbol_preference));
-        updateFragmentValues(sharedPreferences, getString(R.string.key_colorisation_preference));
         updateFragmentValues(sharedPreferences, getString(R.string.key_showaircrafts_preference));
         updateFragmentValues(sharedPreferences, getString(R.string.key_showreceivers_preference));
         updateFragmentValues(sharedPreferences, getString(R.string.key_shownonmoving_preference));
+        updateFragmentValues(sharedPreferences, getString(R.string.key_showregistration_preference));
+        updateFragmentValues(sharedPreferences, getString(R.string.key_aircraft_colorisation_preference));
+        updateFragmentValues(sharedPreferences, getString(R.string.key_receiver_colorisation_preference));
+        updateFragmentValues(sharedPreferences, getString(R.string.key_shownotactive_preference));
+
     }
 
     @Override
@@ -45,6 +48,7 @@ public class PrefsFragment extends PreferenceFragment implements SharedPreferenc
 
     private void updateFragmentValues(SharedPreferences sharedPreferences, String key) {
         Preference pref = findPreference(key);
+
         if (key.equals(getString(R.string.key_aprsfilter_preference))) {
             String value = sharedPreferences.getString(getString(R.string.key_aprsfilter_preference), "");
             if (value.isEmpty()) {
@@ -52,12 +56,7 @@ public class PrefsFragment extends PreferenceFragment implements SharedPreferenc
             } else {
                 pref.setSummary(value);
             }
-        } else if (key.equals(getString(R.string.key_symbol_preference))) {
-            String value = sharedPreferences.getString(getString(R.string.key_symbol_preference), "(default)");
-            pref.setSummary(value);
-        } else if (key.equals(getString(R.string.key_colorisation_preference))) {
-            String value = sharedPreferences.getString(getString(R.string.key_colorisation_preference), getString(R.string.altitude));
-            pref.setSummary(value);
+
         } else if (key.equals(getString(R.string.key_showaircrafts_preference))) {
             Boolean value = sharedPreferences.getBoolean(getString(R.string.key_showaircrafts_preference), true);
             if (value) {
@@ -72,8 +71,29 @@ public class PrefsFragment extends PreferenceFragment implements SharedPreferenc
             } else {
                 pref.setSummary("off");
             }
+
         } else if (key.equals(getString(R.string.key_shownonmoving_preference))) {
             Boolean value = sharedPreferences.getBoolean(getString(R.string.key_shownonmoving_preference), true);
+            if (value) {
+                pref.setSummary("on");
+            } else {
+                pref.setSummary("off");
+            }
+        } else if (key.equals(getString(R.string.key_showregistration_preference))) {
+            Boolean value = sharedPreferences.getBoolean(getString(R.string.key_showregistration_preference), true);
+            if (value) {
+                pref.setSummary("on");
+            } else {
+                pref.setSummary("off");
+            }
+        } else if (key.equals(getString(R.string.key_aircraft_colorisation_preference))) {
+            String value = sharedPreferences.getString(getString(R.string.key_aircraft_colorisation_preference), getString(R.string.altitude));
+            pref.setSummary(value);
+        } else if (key.equals(getString(R.string.key_receiver_colorisation_preference))) {
+            String value = sharedPreferences.getString(getString(R.string.key_receiver_colorisation_preference), getString(R.string.activity));
+            pref.setSummary(value);
+        } else if (key.equals(getString(R.string.key_shownotactive_preference))) {
+            Boolean value = sharedPreferences.getBoolean(getString(R.string.key_shownotactive_preference), true);
             if (value) {
                 pref.setSummary("on");
             } else {

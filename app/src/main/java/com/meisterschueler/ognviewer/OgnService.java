@@ -47,6 +47,8 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
     Map<String, ReceiverBeacon> receiverMap = new ConcurrentHashMap<String, ReceiverBeacon>();
     Map<String, AircraftBundle> aircraftMap = new ConcurrentHashMap<String, AircraftBundle>();
 
+    Map<String, ReceiverActivity> receiverActivityMap = new ConcurrentHashMap<String, ReceiverActivity>();
+
     public interface UpdateListener {
         public void updateAircraftBundle(AircraftBundle bundle);
     }
@@ -71,6 +73,14 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
     public void onUpdate(AircraftBeacon aircraftBeacon, AircraftDescriptor aircraftDescriptor) {
         AircraftBundle bundle = new AircraftBundle(aircraftBeacon, aircraftDescriptor);
         aircraftMap.put(aircraftBeacon.getAddress(), bundle);
+
+        if (receiverActivityMap.containsKey(aircraftBeacon.getReceiverName())) {
+            receiverActivityMap.get(aircraftBeacon.getReceiverName()).addTimestamp(aircraftBeacon.getTimestamp());
+        } else {
+            ReceiverActivity ra = new ReceiverActivity();
+            ra.addTimestamp(aircraftBeacon.getTimestamp());
+            receiverActivityMap.put(aircraftBeacon.getReceiverName(), ra);
+        }
 
         if (updateListener != null) {
             //updateListener.updateAircraftBundle(bundle);
@@ -149,6 +159,16 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
         intent.putExtra("track", receiverBeacon.getTrack());
         intent.putExtra("groundSpeed", receiverBeacon.getGroundSpeed());
         intent.putExtra("rawPacket", receiverBeacon.getRawPacket());
+
+        // Computed Values
+        int counter;
+        ReceiverActivity ra = receiverActivityMap.get(receiverBeacon.getId());
+        if (ra != null) {
+            counter = ra.getCounter();
+        } else {
+            counter = 0;
+        }
+        intent.putExtra("counter", counter);
 
         localBroadcastManager.sendBroadcast(intent);
     }
