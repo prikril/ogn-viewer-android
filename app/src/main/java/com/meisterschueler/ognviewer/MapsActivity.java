@@ -27,6 +27,7 @@ import android.widget.EditText;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
@@ -47,7 +48,7 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
-public class MapsActivity extends FragmentActivity {
+public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
     private OgnService s;
     private ServiceConnection mConnection = new ServiceConnection() {
 
@@ -97,7 +98,7 @@ public class MapsActivity extends FragmentActivity {
                 break;
             case R.id.action_settings:
                 Intent i = new Intent(this, PrefsActivity.class);
-                startActivity(i);
+                startActivityForResult(i, 2); //TODO: replace 2 with constant
 
                 Boolean showreceivers = sharedPreferences.getBoolean(getString(R.string.key_showreceivers_preference), true);
                 for (Marker m: receiverMarkerMap.values()) {
@@ -162,6 +163,20 @@ public class MapsActivity extends FragmentActivity {
     }
 
     @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data)
+    {
+        super.onActivityResult(requestCode, resultCode, data);
+        // check if the request code is same as what is passed  here it is 2
+        if(requestCode==2)
+        {
+            String message=data.getStringExtra("MESSAGE");
+            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+            String aprsFilter = sharedPreferences.getString(getString(R.string.key_aprsfilter_preference), "");
+            updateAprsFilterRange(aprsFilter);
+        }
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
@@ -207,7 +222,7 @@ public class MapsActivity extends FragmentActivity {
                 boolean identified = intent.getBooleanExtra("identified", false);
 
                 boolean isOgnPrivate = known && (!tracked || !identified);
-                updateAircraftBeaconMarker(address, aircraftType, climbRate, lat, lon, alt, (int) groundSpeed, regNumber, CN, model, isOgnPrivate);
+                updateAircraftBeaconMarker(address, aircraftType, climbRate, lat, lon, alt, (int) groundSpeed, regNumber, CN, model, isOgnPrivate, receiverName);
             }
         };
 
@@ -320,10 +335,16 @@ public class MapsActivity extends FragmentActivity {
 
     private void updateAircraftBeaconMarker(AircraftBeacon aircraftBeacon, AircraftDescriptor aircraftDescriptor) {
         boolean isOgnPrivate = aircraftDescriptor.isKnown() && (!aircraftDescriptor.isTracked() || !aircraftDescriptor.isIdentified());
-        updateAircraftBeaconMarker(aircraftBeacon.getAddress(), aircraftBeacon.getAircraftType(), aircraftBeacon.getClimbRate(), aircraftBeacon.getLat(), aircraftBeacon.getLon(), aircraftBeacon.getAlt(), aircraftBeacon.getGroundSpeed(), aircraftDescriptor.getRegNumber(), aircraftDescriptor.getCN(), aircraftDescriptor.getModel(), isOgnPrivate);
+        updateAircraftBeaconMarker(aircraftBeacon.getAddress(), aircraftBeacon.getAircraftType(),
+                aircraftBeacon.getClimbRate(), aircraftBeacon.getLat(), aircraftBeacon.getLon(),
+                aircraftBeacon.getAlt(), aircraftBeacon.getGroundSpeed(), aircraftDescriptor.getRegNumber(),
+                aircraftDescriptor.getCN(), aircraftDescriptor.getModel(), isOgnPrivate, aircraftBeacon.getReceiverName());
     }
 
-    private void updateAircraftBeaconMarker(String address, AircraftType aircraftType, float climbRate, double lat, double lon, float alt, float groundSpeed, String regNumber, String CN, String model, boolean isOgnPrivate) {
+    private void updateAircraftBeaconMarker(String address, AircraftType aircraftType, float climbRate,
+                                            double lat, double lon, float alt, float groundSpeed,
+                                            String regNumber, String CN, String model, boolean isOgnPrivate,
+                                            String receiverName) {
         Marker m;
         boolean infoWindowShown = false;
         if (!aircraftMarkerMap.containsKey(address)) {
@@ -341,7 +362,7 @@ public class MapsActivity extends FragmentActivity {
         Boolean showaircrafts = sharedPreferences.getBoolean(getString(R.string.key_showaircrafts_preference), true);
         Boolean shownonmoving = sharedPreferences.getBoolean(getString(R.string.key_shownonmoving_preference), true);
 
-        if (!showaircrafts || !shownonmoving && groundSpeed < 5 || isOgnPrivate) {
+        if (!showaircrafts || !shownonmoving && groundSpeed < 5) { // || isOgnPrivate) { // auskommentiert 2017-08-04
             m.setVisible(false);
             return;
         } else {
@@ -359,7 +380,8 @@ public class MapsActivity extends FragmentActivity {
         } else {
             m.setTitle(address);
         }
-        m.setSnippet("alt:" + (int) alt + " gs:" + groundSpeed + " vs:" + String.format("%.1f", climbRate));
+        m.setSnippet("alt:" + (int) alt + " gs:" + groundSpeed + " vs:" + String.format("%.1f", climbRate)
+        + " Receiver:" + receiverName);
 
 
         // make color of the marker
@@ -483,16 +505,7 @@ public class MapsActivity extends FragmentActivity {
 
         checkSetUpMap();
 
-        // Restore lat, lon, zoom
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-        float lat = sharedPreferences.getFloat(getString(R.string.key_latitude_preference), 0.0f);
-        float lon = sharedPreferences.getFloat(getString(R.string.key_longitude_preference), 0.0f);
-        float zoom = sharedPreferences.getFloat(getString(R.string.key_zoom_preference), 2.0f);
-        CameraPosition cameraPosition = new CameraPosition.Builder()
-                .target(new LatLng(lat, lon))
-                .zoom(zoom)
-                .build();
-        mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+
     }
 
     @Override
@@ -502,16 +515,15 @@ public class MapsActivity extends FragmentActivity {
 
     private void checkSetUpMap() {
         if (mMap == null) {
-            mMap = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map)).getMap();
+            SupportMapFragment suppMapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
+            suppMapFragment.getMapAsync(this);
 
             if (mMap != null) {
                 setUpMap();
             }
         }
 
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-        String aprsFilter = sharedPreferences.getString(getString(R.string.key_aprsfilter_preference), "");
-        updateAprsFilterRange(aprsFilter);
+
     }
 
     private void setUpMap() {
@@ -616,5 +628,26 @@ public class MapsActivity extends FragmentActivity {
             rangeCircle.setRadius(circle.radius * 1000);
             rangeCircle.setVisible(true);
         }
+    }
+
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        mMap = googleMap;
+
+        // Restore lat, lon, zoom
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        float lat = sharedPreferences.getFloat(getString(R.string.key_latitude_preference), 0.0f);
+        float lon = sharedPreferences.getFloat(getString(R.string.key_longitude_preference), 0.0f);
+        float zoom = sharedPreferences.getFloat(getString(R.string.key_zoom_preference), 2.0f);
+        CameraPosition cameraPosition = new CameraPosition.Builder()
+                .target(new LatLng(lat, lon))
+                .zoom(zoom)
+                .build();
+        mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+
+
+        //SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        String aprsFilter = sharedPreferences.getString(getString(R.string.key_aprsfilter_preference), "");
+        updateAprsFilterRange(aprsFilter);
     }
 }

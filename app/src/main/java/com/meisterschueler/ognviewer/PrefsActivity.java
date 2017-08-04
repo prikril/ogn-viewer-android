@@ -1,6 +1,7 @@
 package com.meisterschueler.ognviewer;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 
 public class PrefsActivity extends Activity {
@@ -11,5 +12,9 @@ public class PrefsActivity extends Activity {
         getFragmentManager().beginTransaction()
                 .replace(android.R.id.content, new PrefsFragment())
                 .commit();
+
+        Intent intent=new Intent();
+        intent.putExtra("MESSAGE","Prefs Activity finished");
+        setResult(2, intent); //TODO: replace 2 with constant
     }
 }
