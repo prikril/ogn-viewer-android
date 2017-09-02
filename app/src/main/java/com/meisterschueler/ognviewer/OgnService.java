@@ -29,61 +29,30 @@ import co.uk.rushorm.core.RushCore;
 
 public class OgnService extends Service implements AircraftBeaconListener, ReceiverBeaconListener {
 
-    public class LocalBinder extends Binder {
-        OgnService getService() {
-            return OgnService.this;
-        }
-    }
+    OgnClient ognClient;
+    boolean connected = false;
+    LocalBroadcastManager localBroadcastManager;
+    IBinder binder = new LocalBinder();
+    Map<String, ReceiverBundle> receiverMap = new ConcurrentHashMap<String, ReceiverBundle>();
+    Map<String, AircraftBundle> aircraftMap = new ConcurrentHashMap<String, AircraftBundle>();
+
+    int maxAircraftCounter = 0;
+    int maxBeaconCounter = 0;
 
     public OgnService() {
     }
-
-    OgnClient ognClient;
-    boolean connected = false;
-
-    LocalBroadcastManager localBroadcastManager;
-    IBinder binder = new LocalBinder();
-
-    Map<String, ReceiverBeacon> receiverMap = new ConcurrentHashMap<String, ReceiverBeacon>();
-    Map<String, AircraftBundle> aircraftMap = new ConcurrentHashMap<String, AircraftBundle>();
-
-    Map<String, ReceiverActivity> receiverActivityMap = new ConcurrentHashMap<String, ReceiverActivity>();
-
-    public interface UpdateListener {
-        public void updateAircraftBundle(AircraftBundle bundle);
-    }
-
-    UpdateListener updateListener = null;
-    public void setUpdateListener(UpdateListener updateListener) {
-        this.updateListener = updateListener;
-    }
-
-    public class AircraftBundle {
-        public AircraftBeacon aircraftBeacon;
-        public AircraftDescriptor aircraftDescriptor;
-
-        public AircraftBundle(AircraftBeacon aircraftBeacon, AircraftDescriptor aircraftDescriptor) {
-            this.aircraftBeacon = aircraftBeacon;
-            this.aircraftDescriptor = aircraftDescriptor;
-        }
-    }
-
 
     @Override
     public void onUpdate(AircraftBeacon aircraftBeacon, AircraftDescriptor aircraftDescriptor) {
         AircraftBundle bundle = new AircraftBundle(aircraftBeacon, aircraftDescriptor);
         aircraftMap.put(aircraftBeacon.getAddress(), bundle);
 
-        if (receiverActivityMap.containsKey(aircraftBeacon.getReceiverName())) {
-            receiverActivityMap.get(aircraftBeacon.getReceiverName()).addTimestamp(aircraftBeacon.getTimestamp());
-        } else {
-            ReceiverActivity ra = new ReceiverActivity();
-            ra.addTimestamp(aircraftBeacon.getTimestamp());
-            receiverActivityMap.put(aircraftBeacon.getReceiverName(), ra);
-        }
-
-        if (updateListener != null) {
-            //updateListener.updateAircraftBundle(bundle);
+        ReceiverBundle receiverBundle = receiverMap.get(aircraftBeacon.getReceiverName());
+        if (receiverBundle != null) {
+            if (!receiverBundle.aircrafts.contains(aircraftBeacon.getId())) {
+                receiverBundle.aircrafts.add(aircraftBeacon.getId());
+            }
+            receiverBundle.beaconCount++;
         }
 
         Intent intent = new Intent("AIRCRAFT-BEACON");
@@ -130,22 +99,27 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
 
     @Override
     public void onUpdate(ReceiverBeacon receiverBeacon) {
-        receiverMap.put(receiverBeacon.getId(), receiverBeacon);
+        ReceiverBundle bundle = receiverMap.get(receiverBeacon.getId());
+        if (bundle == null) {
+            bundle = new ReceiverBundle(receiverBeacon);
+        }
+
+        receiverMap.put(receiverBeacon.getId(), bundle);
 
         Intent intent = new Intent("RECEIVER-BEACON");
 
         // ReceiverBeacon
-        intent.putExtra("cpuLoad", receiverBeacon.getCpuLoad());
-        intent.putExtra("cpuTemp", receiverBeacon.getCpuTemp());
-        intent.putExtra("freeRam", receiverBeacon.getFreeRam());
-        intent.putExtra("totalRam", receiverBeacon.getTotalRam());
-        intent.putExtra("ntpError", receiverBeacon.getNtpError());
-        intent.putExtra("rtCrystalCorrection", receiverBeacon.getRtCrystalCorrection());
-        intent.putExtra("recCrystalCorrection", receiverBeacon.getRecCrystalCorrection());
-        intent.putExtra("recCrystalCorrectionFine", receiverBeacon.getRecCrystalCorrectionFine());
-        intent.putExtra("recAbsCorrection", receiverBeacon.getRecAbsCorrection());
+        //intent.putExtra("cpuLoad", receiverBeacon.getCpuLoad());
+        //intent.putExtra("cpuTemp", receiverBeacon.getCpuTemp());
+        //intent.putExtra("freeRam", receiverBeacon.getFreeRam());
+        //intent.putExtra("totalRam", receiverBeacon.getTotalRam());
+        //intent.putExtra("ntpError", receiverBeacon.getNtpError());
+        //intent.putExtra("rtCrystalCorrection", receiverBeacon.getRtCrystalCorrection());
+        //intent.putExtra("recCrystalCorrection", receiverBeacon.getRecCrystalCorrection());
+        //intent.putExtra("recCrystalCorrectionFine", receiverBeacon.getRecCrystalCorrectionFine());
+        //intent.putExtra("recAbsCorrection", receiverBeacon.getRecAbsCorrection());
         intent.putExtra("recInputNoise", receiverBeacon.getRecInputNoise());
-        intent.putExtra("serverName", receiverBeacon.getServerName());
+        //intent.putExtra("serverName", receiverBeacon.getServerName());
         intent.putExtra("version", receiverBeacon.getVersion());
         intent.putExtra("platform", receiverBeacon.getPlatform());
         intent.putExtra("numericVersion", receiverBeacon.getNumericVersion());
@@ -156,19 +130,18 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
         intent.putExtra("lat", receiverBeacon.getLat());
         intent.putExtra("lon", receiverBeacon.getLon());
         intent.putExtra("alt", receiverBeacon.getAlt());
-        intent.putExtra("track", receiverBeacon.getTrack());
-        intent.putExtra("groundSpeed", receiverBeacon.getGroundSpeed());
-        intent.putExtra("rawPacket", receiverBeacon.getRawPacket());
+        //intent.putExtra("track", receiverBeacon.getTrack());
+        //intent.putExtra("groundSpeed", receiverBeacon.getGroundSpeed());
+        //intent.putExtra("rawPacket", receiverBeacon.getRawPacket());
 
         // Computed Values
-        int counter;
-        ReceiverActivity ra = receiverActivityMap.get(receiverBeacon.getId());
-        if (ra != null) {
-            counter = ra.getCounter();
-        } else {
-            counter = 0;
-        }
-        intent.putExtra("counter", counter);
+        maxAircraftCounter = Math.max(maxAircraftCounter, bundle.aircrafts.size());
+        maxBeaconCounter = Math.max(maxBeaconCounter, bundle.beaconCount);
+
+        intent.putExtra("aircraftCounter", bundle.aircrafts.size());
+        intent.putExtra("maxAircraftCounter", maxBeaconCounter);
+        intent.putExtra("beaconCounter", bundle.beaconCount);
+        intent.putExtra("maxBeaconCounter", maxBeaconCounter);
 
         localBroadcastManager.sendBroadcast(intent);
     }
@@ -232,7 +205,6 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
         return binder;
     }
 
-
     @Override
     public void onDestroy() {
         super.onDestroy();
@@ -241,5 +213,11 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
         connected = false;
 
         Toast.makeText(this, "Disconnected from OGN", Toast.LENGTH_LONG).show();
+    }
+
+    public class LocalBinder extends Binder {
+        OgnService getService() {
+            return OgnService.this;
+        }
     }
 }

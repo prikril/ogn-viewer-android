@@ -78,4 +78,4 @@ public class AircraftDialog {
                 .create()
                 .show();
     }
-    }
+}

@@ -6,7 +6,6 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <!--uses-permission android:name="com.google.android.providers.gsf.permission.READ_GSERVICES" /-->
 
     <application
         android:allowBackup="true"
@@ -31,11 +30,11 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="com.meisterschueler.ognviewer.PrefsActivity"
+            android:name=".PrefsActivity"
             android:label="Preferences">
         </activity>
         <activity
-            android:name="com.meisterschueler.ognviewer.ManageIDsActivity"
+            android:name=".ManageIDsActivity"
             android:label="Manage IDs">
         </activity>
 

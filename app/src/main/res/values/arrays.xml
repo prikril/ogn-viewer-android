@@ -13,13 +13,13 @@
     </string-array>
 
     <string-array name="entries_receiver_colorisation_preference">
-        <item>@string/activity</item>
-        <item>@string/noise</item>
+        <item>@string/aircraft_count</item>
+        <item>@string/beacon_count</item>
     </string-array>
 
     <string-array name="entryvalues_receiver_colorisation_preference">
-        <item>@string/activity</item>
-        <item>@string/noise</item>
+        <item>@string/aircraft_count</item>
+        <item>@string/beacon_count</item>
     </string-array>
 
     <string-array name="entries_symbol_preference">

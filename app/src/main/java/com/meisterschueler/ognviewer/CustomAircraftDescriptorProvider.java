@@ -12,7 +12,7 @@ import co.uk.rushorm.core.RushSearch;
 
 public class CustomAircraftDescriptorProvider implements AircraftDescriptorProvider {
 
-    private Map<String,CustomAircraftDescriptor> aircraftDescriptorMap = new HashMap<String,CustomAircraftDescriptor>();
+    private Map<String, CustomAircraftDescriptor> aircraftDescriptorMap = new HashMap<String, CustomAircraftDescriptor>();
 
     public CustomAircraftDescriptorProvider() {
         List<CustomAircraftDescriptor> cads = new RushSearch().find(CustomAircraftDescriptor.class);

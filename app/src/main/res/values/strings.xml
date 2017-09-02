@@ -59,7 +59,7 @@
     <string name="dialog_title_colorisation_preference">Colorisation</string>
 
     <string name="key_receiver_colorisation_preference">colorisation_receiver_preference</string>
-    <string name="summary_receiver_colorisation_preference">Activity</string>
+    <string name="summary_receiver_colorisation_preference">Aircraft Count</string>
 
     <string name="key_shownotactive_preference">shownotactive_preference</string>
     <string name="title_shownotactive_preference">Show Not-active</string>
@@ -73,8 +73,8 @@
     <string name="aircraft_type">Aircraft type</string>
     <string name="flight_state">Flight state</string>
 
-    <string name="activity">Activity</string>
-    <string name="noise">Noise</string>
+    <string name="aircraft_count">Aircraft Count</string>
+    <string name="beacon_count">Beacon Count</string>
 
     <!-- Keys for save the last known lat,lon,zoom -->
     <string name="key_latitude_preference">latitude_preference</string>

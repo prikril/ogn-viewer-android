@@ -72,7 +72,7 @@
             android:entries="@array/entries_receiver_colorisation_preference"
             android:entryValues="@array/entryvalues_receiver_colorisation_preference"
             android:dialogTitle="@string/dialog_title_colorisation_preference"
-            android:defaultValue="@string/activity"/>
+            android:defaultValue="@string/aircraft_count"/>
 
         <CheckBoxPreference
             android:key="@string/key_shownotactive_preference"
