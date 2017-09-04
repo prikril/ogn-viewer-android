@@ -292,17 +292,12 @@ public class MapsActivity extends FragmentActivity {
         m.setTitle(title);
         m.setSnippet(content);
 
-        int color = Color.rgb(128, 255, 0);
-        if (recInputNoise < -3.0) {
-            color = Color.rgb(128, 128, 255);
-        } else if (recInputNoise < 0) {
-            color = Color.rgb(128, 255, 255);
-        } else if (recInputNoise < 3) {
-            color = Color.rgb(128, 255, 128);
-        } else if (recInputNoise < 10) {
-            color = Color.rgb(255, 255, 128);
+        int color;
+        String colorisation = sharedPreferences.getString(getString(R.string.key_receiver_colorisation_preference), getString(R.string.aircraft_count));
+        if (colorisation.equals(getString(R.string.aircraft_count))) {
+            color = Utils.getColor(aircraftCounter, 0, maxAircraftCounter, 0, 6);
         } else {
-            color = Color.rgb(255, 128, 128);
+            color = Utils.getColor(beaconCounter, 0, maxBeaconCounter, 0, 6);
         }
 
         //m.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE));

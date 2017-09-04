@@ -21,16 +21,4 @@
         <item>@string/aircraft_count</item>
         <item>@string/beacon_count</item>
     </string-array>
-
-    <string-array name="entries_symbol_preference">
-        <item>(default)</item>
-        <item>@string/aircraft_type</item>
-        <item>@string/flight_state</item>
-    </string-array>
-
-    <string-array name="entryvalues_symbol_preference">
-        <item>(default)</item>
-        <item>@string/aircraft_type</item>
-        <item>@string/flight_state</item>
-    </string-array>
 </resources>

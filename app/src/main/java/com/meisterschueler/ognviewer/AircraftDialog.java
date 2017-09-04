@@ -36,7 +36,7 @@ public class AircraftDialog {
         View view = LayoutInflater.from(context).inflate(R.layout.dialog_aircraft, null);
 
         final EditText etAddress = (EditText) view.findViewById(R.id.editTextAddress);
-        final EditText etRegNumber = (EditText) view.findViewById(R.id.editTextRegNumber);
+        final EditText etRegNumber = (EditText) view.findViewById(R.id.editTextRegId);
         final EditText etCN = (EditText) view.findViewById(R.id.editTextCN);
         final EditText etOwner = (EditText) view.findViewById(R.id.editTextOwner);
         final EditText etHomeBase = (EditText) view.findViewById(R.id.editTextHomeBase);

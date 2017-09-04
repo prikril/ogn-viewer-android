@@ -183,7 +183,7 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
     public int onStartCommand(Intent intent, int flags, int startId) {
         String aprs_filter = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getString(getString(R.string.key_aprsfilter_preference), "");
 
-        if (connected == true) {
+        if (connected) {
             ognClient.disconnect();
         }
 
