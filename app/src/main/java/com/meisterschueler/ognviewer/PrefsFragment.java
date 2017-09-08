@@ -22,8 +22,6 @@ public class PrefsFragment extends PreferenceFragment implements SharedPreferenc
         updateFragmentValues(sharedPreferences, getString(R.string.key_showregistration_preference));
         updateFragmentValues(sharedPreferences, getString(R.string.key_aircraft_colorisation_preference));
         updateFragmentValues(sharedPreferences, getString(R.string.key_receiver_colorisation_preference));
-        updateFragmentValues(sharedPreferences, getString(R.string.key_shownotactive_preference));
-
     }
 
     @Override
