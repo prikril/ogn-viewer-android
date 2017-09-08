@@ -292,12 +292,12 @@ public class MapsActivity extends FragmentActivity {
         m.setTitle(title);
         m.setSnippet(content);
 
-        int color;
+        float hue;
         String colorisation = sharedPreferences.getString(getString(R.string.key_receiver_colorisation_preference), getString(R.string.aircraft_count));
         if (colorisation.equals(getString(R.string.aircraft_count))) {
-            color = Utils.getColor(aircraftCounter, 0, maxAircraftCounter, 0, 6);
+            hue = Utils.getHue(aircraftCounter, 0, maxAircraftCounter, 0, 6);
         } else {
-            color = Utils.getColor(beaconCounter, 0, maxBeaconCounter, 0, 6);
+            hue = Utils.getHue(beaconCounter, 0, maxBeaconCounter, 0, 6);
         }
 
         //m.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE));
@@ -308,7 +308,7 @@ public class MapsActivity extends FragmentActivity {
         int iconMinSize = 72;   // sufficient for "808"
         int delta = Math.max(0, iconMinSize - icon.getWidth());
         iconGenerator.setContentPadding(delta / 2, 0, delta / 2, 0);
-        iconGenerator.setColor(color);
+        iconGenerator.setColor(Color.HSVToColor(new float[]{hue, (float)255, (float)255}));
         iconGenerator.setTextAppearance(R.style.TextColorBlack);
         icon = iconGenerator.makeIcon(receiverName);
 
@@ -366,7 +366,7 @@ public class MapsActivity extends FragmentActivity {
         } else {
             title = address;
         }
-        String content = "alt:" + (int) alt + " gs:" + groundSpeed + " vs:" + String.format("%.1f", climbRate);
+        String content = "alt:" + (int) alt + " gs:" + (int) groundSpeed + " vs:" + String.format("%.1f", climbRate);
 
         m.setTitle(title);
         m.setSnippet(content);
@@ -374,15 +374,15 @@ public class MapsActivity extends FragmentActivity {
 
         // make color of the marker
         float hue = 0;
-        int color = 0;
+        int color = Color.rgb(255, 255, 255);
         if (colorisation.equals(getString(R.string.altitude))) {
             final float minAlt = 500.0f;
             final float maxAlt = 3000.0f;
-            hue = (Math.min(Math.max(minAlt, alt), maxAlt) - minAlt) / (maxAlt - minAlt) * 240.0f;
+            hue = Utils.getHue(alt, minAlt, maxAlt, 0, 270);
         } else if (colorisation.equals(getString(R.string.speed))) {
             final float minSpeed = 50.0f;
             final float maxSpeed = 285.0f;
-            hue = (1.0f - (Math.min(Math.max(minSpeed, groundSpeed), maxSpeed) - minSpeed) / (maxSpeed - minSpeed)) * 240.0f;
+            hue = Utils.getHue(groundSpeed, minSpeed, maxSpeed, 0, 270);
         } else if (colorisation.equals(getString(R.string.aircraft_type))) {
             switch (aircraftType) {
                 //case UNKNOWN:
@@ -454,7 +454,7 @@ public class MapsActivity extends FragmentActivity {
             int iconMinSize = 72;   // sufficient for "808"
             int delta = Math.max(0, iconMinSize - icon.getWidth());
             iconGenerator.setContentPadding(delta / 2, 0, delta / 2, 0);
-            iconGenerator.setColor(color);
+            iconGenerator.setColor(Color.HSVToColor(new float[]{hue, 255, 255}));
             iconGenerator.setTextAppearance(R.style.TextColorBlack);
             icon = iconGenerator.makeIcon(title);
 

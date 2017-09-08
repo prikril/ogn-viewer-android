@@ -74,12 +74,6 @@
             android:dialogTitle="@string/dialog_title_colorisation_preference"
             android:defaultValue="@string/aircraft_count"/>
 
-        <CheckBoxPreference
-            android:key="@string/key_shownotactive_preference"
-            android:title="@string/title_shownotactive_preference"
-            android:summary="@string/summary_shownotactive_preference"
-            android:defaultValue="true"/>
-
     </PreferenceCategory>
 
 </PreferenceScreen>

@@ -92,13 +92,6 @@ public class PrefsFragment extends PreferenceFragment implements SharedPreferenc
         } else if (key.equals(getString(R.string.key_receiver_colorisation_preference))) {
             String value = sharedPreferences.getString(getString(R.string.key_receiver_colorisation_preference), getString(R.string.aircraft_count));
             pref.setSummary(value);
-        } else if (key.equals(getString(R.string.key_shownotactive_preference))) {
-            Boolean value = sharedPreferences.getBoolean(getString(R.string.key_shownotactive_preference), true);
-            if (value) {
-                pref.setSummary("on");
-            } else {
-                pref.setSummary("off");
-            }
         }
     }
 }
