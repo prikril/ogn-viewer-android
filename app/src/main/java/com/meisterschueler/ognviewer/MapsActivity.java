@@ -221,8 +221,8 @@ public class MapsActivity extends FragmentActivity {
                 // ReceiverBeacon
                 float recInputNoise = intent.getFloatExtra("recInputNoise", 0);
                 String version = intent.getStringExtra("version");
-                String platform = intent.getStringExtra("version");
-                int numericVersion = intent.getIntExtra("version", 0);
+                String platform = intent.getStringExtra("platform");
+                int numericVersion = intent.getIntExtra("numericVersion", 0);
 
                 // OgnBeacon
                 String id = intent.getStringExtra("id");
