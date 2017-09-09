@@ -1,5 +1,9 @@
 package com.meisterschueler.ognviewer;
 
+import android.location.Location;
+
+import org.ogn.commons.beacon.AircraftBeacon;
+
 public class FlarmMessage {
     private int AlarmLevel;      // decimal 0-3: 0 == no alarm, 1 == 13-18s to impact, 2 == 9-12s to impact, 3 == 0-8s to impact
     private int RelativeNorth;   // Decimal integer value. Range: from -32768 to 32767. Relative position in meters true north from own position.
@@ -12,90 +16,73 @@ public class FlarmMessage {
     private float ClimbRate;     // Decimal fixed point number with one digit after the radix. Range: from -32.7 to 32.7.
     private String AcftType;     // Hexadecimal value. Range: from 0 to F.
 
-    public String toString() {
-        return "PFLAA," + AlarmLevel + "," + RelativeNorth + "," + RelativeEast + "," + RelativeVertical + "," + IDType + "," + ID + "," + Track + "," + GroundSpeed + "," + ClimbRate + "," + AcftType;
-        // PFLAA,<AlarmLevel>,<RelativeNorth>,<RelativeEast>,
-        // <RelativeVertical>,<IDType>,<ID>,<Track>,<TurnRate>,<GroundSpeed>,
-        // <ClimbRate>,<AcftType>
-    }
-
     public int getAlarmLevel() {
         return AlarmLevel;
-    }
-
-    public void setAlarmLevel(int alarmLevel) {
-        AlarmLevel = alarmLevel;
     }
 
     public int getRelativeNorth() {
         return RelativeNorth;
     }
 
-    public void setRelativeNorth(int relativeNorth) {
-        RelativeNorth = relativeNorth;
-    }
-
     public int getRelativeEast() {
         return RelativeEast;
-    }
-
-    public void setRelativeEast(int relativeEast) {
-        RelativeEast = relativeEast;
     }
 
     public int getRelativeVertical() {
         return RelativeVertical;
     }
 
-    public void setRelativeVertical(int relativeVertical) {
-        RelativeVertical = relativeVertical;
-    }
-
     public int getIDType() {
         return IDType;
-    }
-
-    public void setIDType(int IDType) {
-        this.IDType = IDType;
     }
 
     public String getID() {
         return ID;
     }
 
-    public void setID(String ID) {
-        this.ID = ID;
-    }
-
     public int getTrack() {
         return Track;
-    }
-
-    public void setTrack(int track) {
-        Track = track;
     }
 
     public int getGroundSpeed() {
         return GroundSpeed;
     }
 
-    public void setGroundSpeed(int groundSpeed) {
-        GroundSpeed = groundSpeed;
-    }
-
     public float getClimbRate() {
         return ClimbRate;
-    }
-
-    public void setClimbRate(float climbRate) {
-        ClimbRate = climbRate;
     }
 
     public String getAcftType() {
         return AcftType;
     }
 
-    public void setAcftType(String acftType) {
-        AcftType = acftType;
+    public FlarmMessage(AircraftBeacon ab, Location location) {
+        Location beaconLocation = new Location("OGN");
+        beaconLocation.setLatitude(ab.getLat());
+        beaconLocation.setLongitude(ab.getLon());
+        beaconLocation.setAltitude(ab.getAlt());
+        beaconLocation.setBearing(ab.getTrack());
+        beaconLocation.setSpeed(ab.getGroundSpeed());
+
+        float bearing = location.bearingTo(beaconLocation);
+        float distance = location.distanceTo(beaconLocation);
+
+        this.AlarmLevel = 0;
+        this.RelativeNorth = ((int) Math.round(Math.cos(bearing) * distance));
+        this.RelativeEast = ((int) Math.round(Math.sin(bearing) * distance));
+        this.RelativeVertical = ((int) Math.round(ab.getAlt() - location.getAltitude()));
+        this.IDType = ab.getAddressType().getCode();
+        this.ID = ab.getAddress();
+        this.Track = ab.getTrack();
+        this.GroundSpeed = (int) ab.getGroundSpeed();
+        this.ClimbRate = ab.getClimbRate();
+        this.AcftType = Integer.toHexString(ab.getAircraftType().getCode());
+    }
+
+    public String toString() {
+        return "PFLAA," + AlarmLevel + "," + RelativeNorth + "," + RelativeEast + "," + RelativeVertical + "," + IDType + "," + ID + "," + Track + "," + GroundSpeed + "," + ClimbRate + "," + AcftType;
+        // PFLAA,<AlarmLevel>,<RelativeNorth>,<RelativeEast>,
+        // <RelativeVertical>,<IDType>,<ID>,<Track>,<TurnRate>,<GroundSpeed>,
+        // <ClimbRate>,<AcftType>
     }
 }
