@@ -278,13 +278,15 @@ public class MapsActivity extends FragmentActivity {
         } else {
             m = receiverMarkerMap.get(receiverName);
             infoWindowShown = m.isInfoWindowShown();
-            m.setPosition(new LatLng(lat, lon));
+            if (lat != 0.0 && lon != 0.0)
+                m.setPosition(new LatLng(lat, lon));
         }
 
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         Boolean showReceivers = sharedPreferences.getBoolean(getString(R.string.key_showreceivers_preference), false);
+        Boolean isActive = (sharedPreferences.getBoolean(getString(R.string.key_shownotactive_preference), true) || aircraftCounter > 0 || beaconCounter > 0);
 
-        m.setVisible(showReceivers);
+        m.setVisible(showReceivers && isActive);
 
         String title = receiverName + " (" + alt + "m)";
         String content = "Aircrafts: " + aircraftCounter + ", Beacons: " + beaconCounter;
@@ -295,9 +297,9 @@ public class MapsActivity extends FragmentActivity {
         float hue;
         String colorisation = sharedPreferences.getString(getString(R.string.key_receiver_colorisation_preference), getString(R.string.aircraft_count));
         if (colorisation.equals(getString(R.string.aircraft_count))) {
-            hue = Utils.getHue(aircraftCounter, 0, maxAircraftCounter, 0, 6);
+            hue = Utils.getHue(aircraftCounter, 0, maxAircraftCounter, 0, 270);
         } else {
-            hue = Utils.getHue(beaconCounter, 0, maxBeaconCounter, 0, 6);
+            hue = Utils.getHue(beaconCounter, 0, maxBeaconCounter, 0, 270);
         }
 
         //m.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE));

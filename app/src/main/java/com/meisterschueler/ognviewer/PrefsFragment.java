@@ -21,6 +21,7 @@ public class PrefsFragment extends PreferenceFragment implements SharedPreferenc
         updateFragmentValues(sharedPreferences, getString(R.string.key_shownonmoving_preference));
         updateFragmentValues(sharedPreferences, getString(R.string.key_showregistration_preference));
         updateFragmentValues(sharedPreferences, getString(R.string.key_aircraft_colorisation_preference));
+        updateFragmentValues(sharedPreferences, getString(R.string.key_shownotactive_preference));
         updateFragmentValues(sharedPreferences, getString(R.string.key_receiver_colorisation_preference));
     }
 
@@ -79,6 +80,13 @@ public class PrefsFragment extends PreferenceFragment implements SharedPreferenc
             }
         } else if (key.equals(getString(R.string.key_showregistration_preference))) {
             Boolean value = sharedPreferences.getBoolean(getString(R.string.key_showregistration_preference), true);
+            if (value) {
+                pref.setSummary("on");
+            } else {
+                pref.setSummary("off");
+            }
+        } else if (key.equals(getString(R.string.key_shownotactive_preference))) {
+            Boolean value = sharedPreferences.getBoolean(getString(R.string.key_shownotactive_preference), true);
             if (value) {
                 pref.setSummary("on");
             } else {
