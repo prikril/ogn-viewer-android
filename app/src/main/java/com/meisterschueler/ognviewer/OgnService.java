@@ -3,13 +3,21 @@ package com.meisterschueler.ognviewer;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.location.Location;
+import android.location.LocationManager;
 import android.os.Binder;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.widget.Toast;
+
+import com.google.android.gms.location.LocationListener;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.model.CameraPosition;
+import com.google.android.gms.maps.model.LatLng;
 
 import org.ogn.client.AircraftBeaconListener;
 import org.ogn.client.OgnClient;
@@ -29,6 +37,8 @@ import co.uk.rushorm.core.RushCore;
 
 public class OgnService extends Service implements AircraftBeaconListener, ReceiverBeaconListener {
 
+    TcpServer tcpServer;
+
     OgnClient ognClient;
     boolean connected = false;
     LocalBroadcastManager localBroadcastManager;
@@ -39,7 +49,12 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
     int maxAircraftCounter = 0;
     int maxBeaconCounter = 0;
 
+    LocationManager locManager;
+    Location currentLocation = null;
+
     public OgnService() {
+        tcpServer = new TcpServer();
+        tcpServer.startServer();
     }
 
     @Override
@@ -53,6 +68,9 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
                 receiverBundle.aircrafts.add(aircraftBeacon.getId());
             }
             receiverBundle.beaconCount++;
+
+            maxAircraftCounter = Math.max(maxAircraftCounter, receiverBundle.aircrafts.size());
+            maxBeaconCounter = Math.max(maxBeaconCounter, receiverBundle.beaconCount);
         }
 
         Intent intent = new Intent("AIRCRAFT-BEACON");
@@ -95,6 +113,13 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
         }
 
         localBroadcastManager.sendBroadcast(intent);
+
+
+        // TCP stuff
+        LocationManager locManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        currentLocation = locManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+        FlarmMessage flarmMessage = new FlarmMessage(aircraftBeacon, currentLocation);
+        tcpServer.sendMessage(flarmMessage.toString());
     }
 
     @Override
@@ -213,6 +238,8 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
         connected = false;
 
         Toast.makeText(this, "Disconnected from OGN", Toast.LENGTH_LONG).show();
+
+        tcpServer.stopServer();
     }
 
     public class LocalBinder extends Binder {

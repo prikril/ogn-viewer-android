@@ -79,8 +79,18 @@ public class FlarmMessage {
         this.AcftType = Integer.toHexString(ab.getAircraftType().getCode());
     }
 
+    private int checksum(String str) {
+        int result = 0;
+        for(int i = 0; i < str.length(); i++) {
+            result ^= str.charAt(i);
+        }
+        return result;
+    }
+
     public String toString() {
-        return "PFLAA," + AlarmLevel + "," + RelativeNorth + "," + RelativeEast + "," + RelativeVertical + "," + IDType + "," + ID + "," + Track + "," + GroundSpeed + "," + ClimbRate + "," + AcftType;
+        String result = String.format(java.util.Locale.US,"PFLAA,%d,%d,%d,%d,%d,%s,%d,%d,%.1f,%s", AlarmLevel, RelativeNorth, RelativeEast, RelativeVertical, IDType, ID, Track, GroundSpeed, ClimbRate, AcftType);
+        return String.format("$%s*%d", result, checksum(result));
+
         // PFLAA,<AlarmLevel>,<RelativeNorth>,<RelativeEast>,
         // <RelativeVertical>,<IDType>,<ID>,<Track>,<TurnRate>,<GroundSpeed>,
         // <ClimbRate>,<AcftType>
