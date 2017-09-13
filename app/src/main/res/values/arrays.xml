@@ -15,10 +15,12 @@
     <string-array name="entries_receiver_colorisation_preference">
         <item>@string/aircraft_count</item>
         <item>@string/beacon_count</item>
+        <item>@string/altitude</item>
     </string-array>
 
     <string-array name="entryvalues_receiver_colorisation_preference">
         <item>@string/aircraft_count</item>
         <item>@string/beacon_count</item>
+        <item>@string/altitude</item>
     </string-array>
 </resources>

@@ -237,9 +237,8 @@ public class MapsActivity extends FragmentActivity {
                 int beaconCounter = intent.getIntExtra("beaconCounter", 0);
                 int maxBeaconCounter = intent.getIntExtra("maxBeaconCounter", 0);
 
-                updateReceiverBeaconMarker(id, lat, lon, alt, recInputNoise, aircraftCounter, maxAircraftCounter, beaconCounter, maxBeaconCounter);
-
-
+                if (lat != 0 && lon != 0)
+                    updateReceiverBeaconMarker(id, lat, lon, alt, recInputNoise, aircraftCounter, maxAircraftCounter, beaconCounter, maxBeaconCounter);
             }
         };
 
@@ -278,8 +277,7 @@ public class MapsActivity extends FragmentActivity {
         } else {
             m = receiverMarkerMap.get(receiverName);
             infoWindowShown = m.isInfoWindowShown();
-            if (lat != 0.0 && lon != 0.0)
-                m.setPosition(new LatLng(lat, lon));
+            m.setPosition(new LatLng(lat, lon));
         }
 
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
@@ -298,8 +296,10 @@ public class MapsActivity extends FragmentActivity {
         String colorisation = sharedPreferences.getString(getString(R.string.key_receiver_colorisation_preference), getString(R.string.aircraft_count));
         if (colorisation.equals(getString(R.string.aircraft_count))) {
             hue = Utils.getHue(aircraftCounter, 0, maxAircraftCounter, 0, 270);
-        } else {
+        } else if (colorisation.equals(getString(R.string.beacon_count))) {
             hue = Utils.getHue(beaconCounter, 0, maxBeaconCounter, 0, 270);
+        } else {
+            hue = Utils.getHue(alt, 0, 3000, 0, 270);
         }
 
         //m.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE));
