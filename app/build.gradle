@@ -8,8 +8,8 @@ android {
         applicationId "com.meisterschueler.ognviewer"
         minSdkVersion 15
         targetSdkVersion 15
-        versionCode 20
-        versionName "1.2.4"
+        versionCode 21
+        versionName "1.3.0"
     }
 
     buildTypes {
