@@ -368,7 +368,7 @@ public class MapsActivity extends FragmentActivity {
         } else {
             title = address;
         }
-        String content = "alt:" + (int) alt + " gs:" + (int) groundSpeed + " vs:" + String.format("%.1f", climbRate);
+        String content = String.format(Locale.US,"alt:%d gs:%d, vs:%.1f",  (int) alt, (int) groundSpeed, climbRate);
 
         m.setTitle(title);
         m.setSnippet(content);

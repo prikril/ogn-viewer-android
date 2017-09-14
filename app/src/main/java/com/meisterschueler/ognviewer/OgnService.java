@@ -14,11 +14,6 @@ import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.widget.Toast;
 
-import com.google.android.gms.location.LocationListener;
-import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.model.CameraPosition;
-import com.google.android.gms.maps.model.LatLng;
-
 import org.ogn.client.AircraftBeaconListener;
 import org.ogn.client.OgnClient;
 import org.ogn.client.ReceiverBeaconListener;

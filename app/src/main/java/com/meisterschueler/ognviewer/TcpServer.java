@@ -3,11 +3,8 @@ package com.meisterschueler.ognviewer;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class TcpServer {
     private Socket clientSocket = null;
@@ -28,11 +25,8 @@ public class TcpServer {
                 while (!stopped && serverSocket != null) {
                     if (clientSocket == null || clientSocket.isClosed()) {
                         try {
-                            System.out.println("Waiting for client to connect...");
                             clientSocket = serverSocket.accept();
-                            System.out.println("Connected");
                         } catch (IOException e) {
-                            System.err.println("Unable to process client request");
                             e.printStackTrace();
                         }
                     } else {
@@ -51,7 +45,6 @@ public class TcpServer {
 
     public void stopServer() {
         stopped = true;
-        System.err.println("Called stopServer");
         if (clientSocket != null) {
             try {
                 clientSocket.close();
@@ -63,7 +56,6 @@ public class TcpServer {
     }
 
     public void sendMessage(String message) {
-        System.err.println("Called sendMessage: " + message);
         DataOutputStream objectOutput = null;
         try {
             objectOutput = new DataOutputStream(clientSocket.getOutputStream());

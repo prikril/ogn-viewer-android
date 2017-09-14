@@ -4,6 +4,8 @@ import android.location.Location;
 
 import org.ogn.commons.beacon.AircraftBeacon;
 
+import java.util.Locale;
+
 public class FlarmMessage {
     private int AlarmLevel;      // decimal 0-3: 0 == no alarm, 1 == 13-18s to impact, 2 == 9-12s to impact, 3 == 0-8s to impact
     private int RelativeNorth;   // Decimal integer value. Range: from -32768 to 32767. Relative position in meters true north from own position.
@@ -88,8 +90,8 @@ public class FlarmMessage {
     }
 
     public String toString() {
-        String result = String.format(java.util.Locale.US,"PFLAA,%d,%d,%d,%d,%d,%s,%d,%d,%.1f,%s", AlarmLevel, RelativeNorth, RelativeEast, RelativeVertical, IDType, ID, Track, GroundSpeed, ClimbRate, AcftType);
-        return String.format("$%s*%d", result, checksum(result));
+        String result = String.format(Locale.US,"PFLAA,%d,%d,%d,%d,%d,%s,%d,%d,%.1f,%s", AlarmLevel, RelativeNorth, RelativeEast, RelativeVertical, IDType, ID, Track, GroundSpeed, ClimbRate, AcftType);
+        return String.format(Locale.US,"$%s*%d", result, checksum(result));
 
         // PFLAA,<AlarmLevel>,<RelativeNorth>,<RelativeEast>,
         // <RelativeVertical>,<IDType>,<ID>,<Track>,<TurnRate>,<GroundSpeed>,

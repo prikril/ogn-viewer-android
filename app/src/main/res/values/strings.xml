@@ -34,8 +34,6 @@
     <string name="empty_aprsfilter_preference">(empty)</string>
 
     <!-- Settings/Preferences -->
-    <string name="title_activity_settings">SettingsActivity</string>
-
     <string name="key_showaircrafts_preference">showaircrafts_preference</string>
     <string name="title_showaircrafts_preference">Show Aircraft</string>
     <string name="summary_showaircrafts_preference">on</string>
