@@ -64,7 +64,7 @@ public class FlarmMessage {
         beaconLocation.setBearing(ab.getTrack());
         beaconLocation.setSpeed(ab.getGroundSpeed());
 
-        float bearing = location.bearingTo(beaconLocation);
+        double bearing = location.bearingTo(beaconLocation) / 180.0 * Math.PI;
         float distance = location.distanceTo(beaconLocation);
 
         this.AlarmLevel = 0;

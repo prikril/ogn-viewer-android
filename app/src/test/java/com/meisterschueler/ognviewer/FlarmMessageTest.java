@@ -31,6 +31,9 @@ public class FlarmMessageTest {
         parser = AprsLineParser.get();
     }
 
+    // 51N 13E to 51N 14E or 51N 12E == 69.98km
+    // 51N 13E to 52N 13E or 50N 13E == 111.2km
+
     @Test
     public void test_basic() {
         AircraftBeacon ab = (AircraftBeacon) parser.parse("ICA4B0E3A>APRS,qAS,Letzi:/165319h5100.00N\\01300.00E^327/149/A=006498 id0ADDA5BA -454fpm -1.1rot 8.8dB 0e +51.2kHz gps4x5");
@@ -59,9 +62,8 @@ public class FlarmMessageTest {
         AircraftBeacon ab = (AircraftBeacon) parser.parse("ICA4B0E3A>APRS,qAS,Letzi:/165319h5100.00N\\01400.00E^327/149/A=006498 id0ADDA5BA -454fpm -1.1rot 8.8dB 0e +51.2kHz gps4x5");
 
         FlarmMessage flarmMessage = new FlarmMessage(ab, location);
-        Assert.assertTrue(flarmMessage.getRelativeEast() > 1000);
-        //Assert.assertEquals(flarmMessage.getRelativeNorth(), 0, 0.01);
-        //Assert.assertEquals(flarmMessage.getRelativeVertical(), feetsToMetres(6498) - location.getAltitude(), 1.0);
+        Assert.assertEquals(flarmMessage.getRelativeNorth(), 0, 500);
+        Assert.assertEquals(flarmMessage.getRelativeEast(), 69980, 500);
     }
 
     @Test
@@ -69,9 +71,8 @@ public class FlarmMessageTest {
         AircraftBeacon ab = (AircraftBeacon) parser.parse("ICA4B0E3A>APRS,qAS,Letzi:/165319h5100.00N\\01200.00E^327/149/A=006498 id0ADDA5BA -454fpm -1.1rot 8.8dB 0e +51.2kHz gps4x5");
 
         FlarmMessage flarmMessage = new FlarmMessage(ab, location);
-        Assert.assertTrue(flarmMessage.getRelativeEast() < -1000);
-        //Assert.assertEquals(flarmMessage.getRelativeNorth(), 0, 0.01);
-        //Assert.assertEquals(flarmMessage.getRelativeVertical(), feetsToMetres(6498) - location.getAltitude(), 1.0);
+        Assert.assertEquals(flarmMessage.getRelativeNorth(), 0, 500);
+        Assert.assertEquals(flarmMessage.getRelativeEast(), -69980, 500);
     }
 
     @Test
@@ -79,7 +80,8 @@ public class FlarmMessageTest {
         AircraftBeacon ab = (AircraftBeacon) parser.parse("ICA4B0E3A>APRS,qAS,Letzi:/165319h5200.00N\\01300.00E^327/149/A=006498 id0ADDA5BA -454fpm -1.1rot 8.8dB 0e +51.2kHz gps4x5");
 
         FlarmMessage flarmMessage = new FlarmMessage(ab, location);
-        Assert.assertTrue(flarmMessage.getRelativeNorth() > 1000);
+        Assert.assertEquals(flarmMessage.getRelativeNorth(), 111200, 500);
+        Assert.assertEquals(flarmMessage.getRelativeEast(), 0, 500);
     }
 
     @Test
@@ -87,6 +89,7 @@ public class FlarmMessageTest {
         AircraftBeacon ab = (AircraftBeacon) parser.parse("ICA4B0E3A>APRS,qAS,Letzi:/165319h5000.00N\\01300.00E^327/149/A=006498 id0ADDA5BA -454fpm -1.1rot 8.8dB 0e +51.2kHz gps4x5");
 
         FlarmMessage flarmMessage = new FlarmMessage(ab, location);
-        Assert.assertTrue(flarmMessage.getRelativeNorth() < -1000);
+        Assert.assertEquals(flarmMessage.getRelativeNorth(), -111200, 500);
+        Assert.assertEquals(flarmMessage.getRelativeEast(), 0, 500);
     }
 }
