@@ -48,7 +48,7 @@ import java.util.Locale;
 import java.util.Map;
 
 public class MapsActivity extends FragmentActivity {
-    private OgnService s;
+    private OgnService ognService;
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
     private Circle rangeCircle;
     private BroadcastReceiver aircraftReceiver;
@@ -59,14 +59,14 @@ public class MapsActivity extends FragmentActivity {
 
         public void onServiceConnected(ComponentName className, IBinder binder) {
             OgnService.LocalBinder b = (OgnService.LocalBinder) binder;
-            s = b.getService();
+            ognService = b.getService();
 
-            updateKnownAircrafts(s.aircraftMap);
-            updateKnownReceivers(s.receiverMap);
+            updateKnownAircrafts(ognService.aircraftMap);
+            updateKnownReceivers(ognService.receiverMap);
         }
 
         public void onServiceDisconnected(ComponentName className) {
-            s = null;
+            ognService = null;
         }
     };
 

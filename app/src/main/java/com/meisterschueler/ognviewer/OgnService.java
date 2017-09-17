@@ -195,18 +195,21 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
         ognClient.subscribeToAircraftBeacons(this);
         ognClient.subscribeToReceiverBeacons(this);
 
-        Notification notification = new Notification.Builder(getApplicationContext())
-                .setSmallIcon(R.drawable.ic_stat)
-                .getNotification();
-
         String versionName = "?";
         try {
             versionName = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
         }
+
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, new Intent(this, MapsActivity.class), 0);
-        notification.setLatestEventInfo(this, "OGN Viewer", "Version " + versionName, pendingIntent);
+
+        Notification notification = new Notification.Builder(getApplicationContext())
+                .setSmallIcon(R.drawable.ic_stat)
+                .setContentTitle("OGN Viewer")
+                .setContentText("Version " + versionName)
+                .setContentIntent(pendingIntent)
+                .getNotification();
 
         startForeground(R.string.notification_id, notification);
     }
