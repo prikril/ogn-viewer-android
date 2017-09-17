@@ -50,6 +50,23 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
     public OgnService() {
         tcpServer = new TcpServer();
         tcpServer.startServer();
+        Runnable locationUpdate = new Runnable() {
+            @Override
+            public void run() {
+                while(true) {
+                    LocationManager locManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+                    currentLocation = locManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                    tcpServer.updatePosition(currentLocation);
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        };
+        Thread locationUpdateThread = new Thread(locationUpdate);
+        locationUpdateThread.start();
     }
 
     @Override
@@ -109,12 +126,7 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
 
         localBroadcastManager.sendBroadcast(intent);
 
-
-        // TCP stuff
-        LocationManager locManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        currentLocation = locManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-        FlarmMessage flarmMessage = new FlarmMessage(aircraftBeacon, currentLocation);
-        tcpServer.sendMessage(flarmMessage.toString());
+        tcpServer.addFlarmMessage(new FlarmMessage(aircraftBeacon));
     }
 
     @Override
