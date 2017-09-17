@@ -10,6 +10,8 @@ import java.util.Locale;
 public class FlarmMessage {
     private Location beaconLocation;
     private long time;
+    private double bearing = 0.0;
+    private float distance = 0.0f;
 
     private int AlarmLevel;      // decimal 0-3: 0 == no alarm, 1 == 13-18s to impact, 2 == 9-12s to impact, 3 == 0-8s to impact
     private int RelativeNorth;   // Decimal integer value. Range: from -32768 to 32767. Relative position in meters true north from own position.
@@ -22,8 +24,17 @@ public class FlarmMessage {
     private float ClimbRate;     // Decimal fixed point number with one digit after the radix. Range: from -32.7 to 32.7.
     private String AcftType;     // Hexadecimal value. Range: from 0 to F.
 
+
     public long getTime() {
         return time;
+    }
+
+    public double getBearing() {
+        return bearing;
+    }
+
+    public float getDistance() {
+        return distance;
     }
 
     public int getAlarmLevel() {
@@ -86,8 +97,8 @@ public class FlarmMessage {
     }
 
     public void setOwnLocation(Location ownLocation) {
-        double bearing = ownLocation.bearingTo(beaconLocation) / 180.0 * Math.PI;
-        float distance = ownLocation.distanceTo(beaconLocation);
+        this.bearing = ownLocation.bearingTo(beaconLocation) / 180.0 * Math.PI;
+        this.distance = ownLocation.distanceTo(beaconLocation);
 
         this.RelativeNorth = ((int) Math.round(Math.cos(bearing) * distance));
         this.RelativeEast = ((int) Math.round(Math.sin(bearing) * distance));
@@ -103,7 +114,7 @@ public class FlarmMessage {
     }
 
     public String toString() {
-        String result = String.format(Locale.US,"PFLAA,%d,%d,%d,%d,%d,%s,%d,10,%d,%.1f,%s", AlarmLevel, RelativeNorth, RelativeEast, RelativeVertical, IDType, ID, Track, GroundSpeed, ClimbRate, AcftType);
+        String result = String.format(Locale.US,"PFLAA,%d,%d,%d,%d,%d,%s,%d,,%d,%.1f,%s", AlarmLevel, RelativeNorth, RelativeEast, RelativeVertical, IDType, ID, Track, GroundSpeed, ClimbRate, AcftType);
         return String.format(Locale.US,"$%s*%s", result, checksum(result));
 
         // PFLAA,<AlarmLevel>,<RelativeNorth>,<RelativeEast>,

@@ -3,25 +3,21 @@ package com.meisterschueler.ognviewer;
 
 import android.location.Location;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class TcpServer {
-    private static final long MAX_TIME = 10000;
+    private static final long MAX_TIME = 30000; // keep flarm position for 30s
+    private static final int MIN_DISTANCE = 2000; // if distance to flarm is < 2000m it wont be shown
     private Socket clientSocket = null;
     private boolean stopped = true;
-    private Map<String, FlarmMessage> messageMap = new HashMap<String, FlarmMessage>();
+    private Map<String, FlarmMessage> messageMap = new ConcurrentHashMap<String, FlarmMessage>();
 
     public void startServer() {
         stopped = false;
@@ -69,30 +65,8 @@ public class TcpServer {
         }
     }
 
-    public void playNMEA() {
-        String file = "res/raw/logfile.nmea";
-        InputStream in = this.getClass().getClassLoader().getResourceAsStream(file);
-        BufferedInputStream bi = new BufferedInputStream(in);
-
-        BufferedReader r = new BufferedReader(new InputStreamReader(bi));
-        DataOutputStream objectOutput = null;
-        try {
-            while (true) {
-                String line = r.readLine();
-                objectOutput = new DataOutputStream(clientSocket.getOutputStream());
-                objectOutput.write((line + "\r\n").getBytes("US-ASCII"));
-                Thread.sleep(100);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-    }
-
     public void updatePosition(Location location) {
-        if (clientSocket == null) {
+        if (clientSocket == null || clientSocket.isClosed()) {
             return;
         }
 
@@ -113,13 +87,14 @@ public class TcpServer {
             } else {
                 FlarmMessage flarmMessage = entry.getValue();
                 flarmMessage.setOwnLocation(location);
+                if (flarmMessage.getDistance() < MIN_DISTANCE) {
+                    continue;
+                }
                 String message = flarmMessage.toString();
                 try {
                     objectOutput.write((message + "\r\n").getBytes("US-ASCII"));
-                    System.err.println(message);
                 } catch (IOException e) {
                     //e.printStackTrace();
-                    System.err.println("Dat ding is zu...");
                     try {
                         clientSocket.close();
                     } catch (IOException e1) {
