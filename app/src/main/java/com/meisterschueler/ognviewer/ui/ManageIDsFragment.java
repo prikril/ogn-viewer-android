@@ -1,4 +1,4 @@
-package com.meisterschueler.ognviewer;
+package com.meisterschueler.ognviewer.ui;
 
 import android.app.ListFragment;
 import android.os.Bundle;
@@ -7,6 +7,13 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
+
+import com.meisterschueler.ognviewer.AircraftDescriptorProviderHelper;
+import com.meisterschueler.ognviewer.AircraftDialog;
+import com.meisterschueler.ognviewer.CustomAircraftDescriptor;
+import com.meisterschueler.ognviewer.CustomAircraftDescriptorAdapter;
+import com.meisterschueler.ognviewer.CustomAircraftDescriptorProvider;
+import com.meisterschueler.ognviewer.R;
 
 import java.util.Map;
 

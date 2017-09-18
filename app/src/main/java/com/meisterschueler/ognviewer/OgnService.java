@@ -14,6 +14,9 @@ import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.widget.Toast;
 
+import com.meisterschueler.ognviewer.common.FlarmMessage;
+import com.meisterschueler.ognviewer.common.ReceiverBundle;
+
 import org.ogn.client.AircraftBeaconListener;
 import org.ogn.client.OgnClient;
 import org.ogn.client.ReceiverBeaconListener;
@@ -38,8 +41,8 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
     boolean connected = false;
     LocalBroadcastManager localBroadcastManager;
     IBinder binder = new LocalBinder();
-    Map<String, ReceiverBundle> receiverMap = new ConcurrentHashMap<String, ReceiverBundle>();
-    Map<String, AircraftBundle> aircraftMap = new ConcurrentHashMap<String, AircraftBundle>();
+    Map<String, ReceiverBundle> receiverMap = new ConcurrentHashMap<>();
+    Map<String, AircraftBundle> aircraftMap = new ConcurrentHashMap<>();
 
     int maxAircraftCounter = 0;
     int maxBeaconCounter = 0;

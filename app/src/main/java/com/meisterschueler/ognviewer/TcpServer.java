@@ -3,6 +3,8 @@ package com.meisterschueler.ognviewer;
 
 import android.location.Location;
 
+import com.meisterschueler.ognviewer.common.FlarmMessage;
+
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -17,7 +19,7 @@ public class TcpServer {
     private static final int MIN_DISTANCE = 2000; // if distance to flarm is < 2000m it wont be shown
     private Socket clientSocket = null;
     private boolean stopped = true;
-    private Map<String, FlarmMessage> messageMap = new ConcurrentHashMap<String, FlarmMessage>();
+    private Map<String, FlarmMessage> messageMap = new ConcurrentHashMap<>();
 
     public void startServer() {
         stopped = false;

@@ -1,10 +1,13 @@
-package com.meisterschueler.ognviewer;
+package com.meisterschueler.ognviewer.ui;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
+
+import com.meisterschueler.ognviewer.OgnService;
+import com.meisterschueler.ognviewer.R;
 
 public class PrefsFragment extends PreferenceFragment implements SharedPreferences.OnSharedPreferenceChangeListener {
 

@@ -1,4 +1,4 @@
-package com.meisterschueler.ognviewer;
+package com.meisterschueler.ognviewer.common;
 
 public class Utils {
     public static float getHue(float value, float min, float max, int minColor, int maxColor) {

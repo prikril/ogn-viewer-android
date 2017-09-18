@@ -1,4 +1,4 @@
-package com.meisterschueler.ognviewer;
+package com.meisterschueler.ognviewer.common;
 
 import org.ogn.commons.beacon.ReceiverBeacon;
 
@@ -16,6 +16,6 @@ public class ReceiverBundle {
         this.receiverBeacon = receiverBeacon;
 
         this.beaconCount = 0;
-        this.aircrafts = new ArrayList<String>();
+        this.aircrafts = new ArrayList<>();
     }
 }

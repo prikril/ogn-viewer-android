@@ -11,7 +11,7 @@ public enum AircraftDescriptorProviderHelper {
     INSTANCE;
 
     private static final AircraftDescriptorProvider adp1 = new CustomAircraftDescriptorProvider();
-    private static final AircraftDescriptorProvider adp2 = new FileDbDescriptorProvider<OgnDb>(OgnDb.class);
+    private static final AircraftDescriptorProvider adp2 = new FileDbDescriptorProvider<>(OgnDb.class);
     private static final OgnClient ognClient = OgnClientFactory.createClient(adp1, adp2);
 
     public static final AircraftDescriptorProvider getCustomDbAircraftDescriptorProvider() {

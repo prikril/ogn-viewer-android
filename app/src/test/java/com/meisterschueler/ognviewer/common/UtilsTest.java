@@ -1,4 +1,6 @@
-package com.meisterschueler.ognviewer;
+package com.meisterschueler.ognviewer.common;
+
+import com.meisterschueler.ognviewer.common.Utils;
 
 import org.junit.Assert;
 import org.junit.Test;

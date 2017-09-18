@@ -1,4 +1,4 @@
-package com.meisterschueler.ognviewer;
+package com.meisterschueler.ognviewer.common;
 
 import android.location.Location;
 

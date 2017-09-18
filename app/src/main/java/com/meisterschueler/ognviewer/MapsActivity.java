@@ -36,6 +36,8 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.maps.android.ui.IconGenerator;
+import com.meisterschueler.ognviewer.common.ReceiverBundle;
+import com.meisterschueler.ognviewer.common.Utils;
 
 import org.ogn.commons.beacon.AddressType;
 import org.ogn.commons.beacon.AircraftBeacon;
@@ -53,8 +55,8 @@ public class MapsActivity extends FragmentActivity {
     private Circle rangeCircle;
     private BroadcastReceiver aircraftReceiver;
     private BroadcastReceiver receiverReceiver;
-    private Map<String, Marker> aircraftMarkerMap = new HashMap<String, Marker>();
-    private Map<String, Marker> receiverMarkerMap = new HashMap<String, Marker>();
+    private Map<String, Marker> aircraftMarkerMap = new HashMap<>();
+    private Map<String, Marker> receiverMarkerMap = new HashMap<>();
     private ServiceConnection mConnection = new ServiceConnection() {
 
         public void onServiceConnected(ComponentName className, IBinder binder) {
@@ -252,7 +254,7 @@ public class MapsActivity extends FragmentActivity {
                 if (locManager != null) {
                     Location location = locManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
                     if (location != null) {
-                        aprsFilter = latLngToAprsFilter(new LatLng(location.getLatitude(), location.getLongitude()));
+                        aprsFilter = AprsFilterManager.latLngToAprsFilter(location.getLatitude(), location.getLongitude());
                     }
                 }
                 editEmptyAprsFilter(aprsFilter);
@@ -549,14 +551,10 @@ public class MapsActivity extends FragmentActivity {
         mMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
             @Override
             public void onMapLongClick(LatLng latLng) {
-                String aprsFilter = latLngToAprsFilter(latLng);
+                String aprsFilter = AprsFilterManager.latLngToAprsFilter(latLng.latitude, latLng.longitude);
                 editAprsFilter(aprsFilter);
             }
         });
-    }
-
-    private String latLngToAprsFilter(LatLng latLng) {
-        return String.format(Locale.US, "r/%1$.3f/%2$.3f/%3$.1f", latLng.latitude, latLng.longitude, 100.0);
     }
 
     private void editAprsFilter(final String aprsFilter) {
@@ -619,7 +617,7 @@ public class MapsActivity extends FragmentActivity {
         }
         rangeCircle.setVisible(false);
 
-        AprsFilterParser.Circle circle = AprsFilterParser.parse(aprsFilter);
+        AprsFilterManager.Circle circle = AprsFilterManager.parse(aprsFilter);
         if (circle != null) {
             rangeCircle.setCenter(new LatLng(circle.lat, circle.lon));
             rangeCircle.setRadius(circle.radius * 1000);
