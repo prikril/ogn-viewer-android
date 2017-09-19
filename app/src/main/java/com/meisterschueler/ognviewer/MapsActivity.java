@@ -559,7 +559,7 @@ public class MapsActivity extends FragmentActivity {
 
     private void editAprsFilter(final String aprsFilter) {
         View view = getLayoutInflater().inflate(R.layout.dialog_aprsfilter, null);
-        final EditText et = (EditText) view.findViewById(R.id.editTextOwner);
+        final EditText et = view.findViewById(R.id.editTextOwner);
         et.setText(aprsFilter);
 
         new AlertDialog.Builder(this).setView(view)
@@ -590,7 +590,7 @@ public class MapsActivity extends FragmentActivity {
 
     private void editEmptyAprsFilter(final String aprsFilter) {
         View view = getLayoutInflater().inflate(R.layout.dialog_aprsfilter, null);
-        final EditText et = (EditText) view.findViewById(R.id.editTextOwner);
+        final EditText et = view.findViewById(R.id.editTextOwner);
         et.setText(aprsFilter);
 
         new AlertDialog.Builder(this).setView(view)

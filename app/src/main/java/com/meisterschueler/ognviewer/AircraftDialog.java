@@ -35,13 +35,13 @@ public class AircraftDialog {
     public static void showDialog(Context context, final CustomAircraftDescriptor cad) {
         View view = LayoutInflater.from(context).inflate(R.layout.dialog_aircraft, null);
 
-        final EditText etAddress = (EditText) view.findViewById(R.id.editTextAddress);
-        final EditText etRegNumber = (EditText) view.findViewById(R.id.editTextRegId);
-        final EditText etCN = (EditText) view.findViewById(R.id.editTextCN);
-        final EditText etOwner = (EditText) view.findViewById(R.id.editTextOwner);
-        final EditText etHomeBase = (EditText) view.findViewById(R.id.editTextHomeBase);
-        final EditText etModel = (EditText) view.findViewById(R.id.editTextModel);
-        final EditText etFreq = (EditText) view.findViewById(R.id.editTextFreq);
+        final EditText etAddress = view.findViewById(R.id.editTextAddress);
+        final EditText etRegNumber = view.findViewById(R.id.editTextRegId);
+        final EditText etCN = view.findViewById(R.id.editTextCN);
+        final EditText etOwner = view.findViewById(R.id.editTextOwner);
+        final EditText etHomeBase = view.findViewById(R.id.editTextHomeBase);
+        final EditText etModel = view.findViewById(R.id.editTextModel);
+        final EditText etFreq = view.findViewById(R.id.editTextFreq);
 
         etAddress.setText(cad.address);
         etRegNumber.setText(cad.regNumber);
