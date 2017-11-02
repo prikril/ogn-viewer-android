@@ -53,13 +53,14 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
     LocalBroadcastManager localBroadcastManager;
     IBinder binder = new LocalBinder();
     Map<String, ReceiverBundle> receiverMap = new ConcurrentHashMap<>();
-    Map<String, AircraftBundle> aircraftMap = new ConcurrentHashMap<>();
+    //Map<String, AircraftBundle> aircraftMap = new ConcurrentHashMap<>(); //von upstream 2017-11-02
+    private Map<String,Aircraft> aircraftMap = new HashMap<>(); //TODO: von dominik, entfernen? 2017-11-02
 
     int maxAircraftCounter = 0;
     int maxBeaconCounter = 0;
-    Map<String, ReceiverBeacon> receiverBundleMap = new ConcurrentHashMap<String, ReceiverBeacon>();
+    Map<String, ReceiverBundle> receiverBundleMap = new ConcurrentHashMap<String, ReceiverBundle>();
     Map<String, AircraftBundle> aircraftBundleMap = new ConcurrentHashMap<String, AircraftBundle>();
-    private Map<String,Aircraft> aircraftMap = new HashMap<>();
+
 
     LocationManager locManager;
     Location currentLocation = null;
@@ -78,14 +79,21 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
             public void run() {
                 while(true) {
                     LocationManager locManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-                    currentLocation = locManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-                    tcpServer.updatePosition(currentLocation);
+                    try {
+                        currentLocation = locManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                        if (currentLocation != null) {
+                            tcpServer.updatePosition(currentLocation);
+                        }
+                    } catch (SecurityException se) {
+                        // accessing location is forbidden
+                    }
                     try {
                         Thread.sleep(1000);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
                 }
+
             }
         };
         Thread locationUpdateThread = new Thread(locationUpdate);
@@ -172,7 +180,6 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
 
     @Override
     public void onUpdate(ReceiverBeacon receiverBeacon) {
-        receiverBundleMap.put(receiverBeacon.getId(), receiverBeacon);
         ReceiverBundle bundle = receiverMap.get(receiverBeacon.getId());
         if (bundle == null) {
             bundle = new ReceiverBundle(receiverBeacon);
