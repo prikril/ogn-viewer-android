@@ -3,11 +3,6 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     tools:context=".MapsActivity">
     <item
-        android:id="@+id/action_aprsfilter"
-        android:title="@string/action_aprs_filter"
-        android:visible="false"/>
-
-    <item
         android:id="@+id/action_settings"
         android:title="@string/action_settings"/>
 

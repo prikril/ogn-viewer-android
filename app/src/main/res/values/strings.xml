@@ -5,10 +5,9 @@
     <!-- APRS empty dialog -->
     <string name="hint_aprs_filter">(empty APRS filter --- danger!)</string>
     <string name="aprs_filter_title">"Set APRS filter"</string>
-    <string name="empty_aprs_filter_message">"Caution: An empty APRS filter can make the app very very slow."</string>
+    <string name="empty_aprs_filter_message">"Caution: An empty APRS filter can make the app extreme slow."</string>
 
     <!-- Main Menu -->
-    <string name="action_aprs_filter">Set APRS filter</string>
     <string name="action_settings">Settings</string>
     <string name="action_manageids">Manage IDs</string>
     <string name="action_currentlocation">Go to current location</string>
@@ -35,20 +34,8 @@
     <string name="empty_aprsfilter_preference">(empty)</string>
 
     <!-- Settings/Preferences -->
-    <string name="title_activity_settings">SettingsActivity</string>
-
-    <string name="key_symbol_preference">symbol_preference</string>
-    <string name="title_symbol_preference">Symbol</string>
-    <string name="summary_symbol_preference">(default)</string>
-    <string name="dialog_title_symbol_preference">Symbol</string>
-
-    <string name="key_colorisation_preference">colorisation_preference</string>
-    <string name="title_colorisation_preference">Colorisation</string>
-    <string name="summary_colorisation_preference">Altitude</string>
-    <string name="dialog_title_colorisation_preference">Colorisation</string>
-
     <string name="key_showaircrafts_preference">showaircrafts_preference</string>
-    <string name="title_showaircrafts_preference">Show Aircrafts</string>
+    <string name="title_showaircrafts_preference">Show Aircraft</string>
     <string name="summary_showaircrafts_preference">on</string>
 
     <string name="key_showreceivers_preference">showreceivers_preference</string>
@@ -59,15 +46,30 @@
     <string name="title_shownonmoving_preference">Show Non-Moving</string>
     <string name="summary_shownonmoving_preference">on</string>
 
-    <string name="key_showstealth_preference">showstealth_preference</string>
-    <string name="title_showstealth_preference">Show stealth</string>
-    <string name="summary_showstealth_preference">off</string>
+    <string name="key_showregistration_preference">showregistration_preference</string>
+    <string name="title_showregistration_preference">Show Registration</string>
+    <string name="summary_showregistration_preference">on</string>
 
+    <string name="key_aircraft_colorisation_preference">colorisation_aircraft_preference</string>
+    <string name="title_colorisation_preference">Colorisation</string>
+    <string name="summary_aircraft_colorisation_preference">Altitude</string>
+    <string name="dialog_title_colorisation_preference">Colorisation</string>
+
+    <string name="key_receiver_colorisation_preference">colorisation_receiver_preference</string>
+    <string name="summary_receiver_colorisation_preference">Aircraft Count</string>
+
+    <string name="key_shownotactive_preference">shownotactive_preference</string>
+    <string name="title_shownotactive_preference">Show Not-active</string>
+    <string name="summary_shownotactive_preference">on</string>
+
+
+    <!-- Entry keys and values of arrays -->
     <string name="altitude">Altitude</string>
     <string name="speed">Speed</string>
-    <string name="performance">Performance</string>
     <string name="aircraft_type">Aircraft type</string>
-    <string name="flight_state">Flight state</string>
+
+    <string name="aircraft_count">Aircraft Count</string>
+    <string name="beacon_count">Beacon Count</string>
 
     <!-- Keys for save the last known lat,lon,zoom -->
     <string name="key_latitude_preference">latitude_preference</string>

@@ -37,6 +37,8 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.maps.android.ui.IconGenerator;
+import com.meisterschueler.ognviewer.common.ReceiverBundle;
+import com.meisterschueler.ognviewer.common.Utils;
 
 import org.ogn.commons.beacon.AddressType;
 import org.ogn.commons.beacon.AircraftBeacon;
@@ -51,12 +53,17 @@ import java.util.Map;
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback,
         GoogleMap.OnCameraMoveStartedListener, GoogleMap.OnCameraIdleListener {
     private OgnService ognService;
+    private Circle rangeCircle;
+    private BroadcastReceiver aircraftReceiver;
+    private BroadcastReceiver receiverReceiver;
+    private Map<String, Marker> aircraftMarkerMap = new HashMap<>();
+    private Map<String, Marker> receiverMarkerMap = new HashMap<>();
+    private GoogleMap mMap; // Might be null if Google Play services APK is not available.
     private ServiceConnection mConnection = new ServiceConnection() {
 
         public void onServiceConnected(ComponentName className, IBinder binder) {
             OgnService.LocalBinder localBinder = (OgnService.LocalBinder) binder;
             ognService = localBinder.getService();
-            
             for (final OgnService.AircraftBundle bundle : ognService.aircraftBundleMap.values()) {
                 AircraftBeacon aircraftBeacon = bundle.aircraftBeacon;
                 AircraftDescriptor aircraftDescriptor = bundle.aircraftDescriptor;
@@ -73,16 +80,19 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     };
 
-    private GoogleMap mMap; // Might be null if Google Play services APK is not available.
 
-    private BroadcastReceiver aircraftReceiver;
-    private BroadcastReceiver receiverReceiver;
     private BroadcastReceiver actionReceiver;
-    private Map<String,Marker> aircraftMarkerMap = new HashMap<String,Marker>();
-    private Map<String,Marker> receiverMarkerMap = new HashMap<String,Marker>();
+    private void updateKnownAircrafts(final Map<String, AircraftBundle> aircraftMap) {
+        for (final AircraftBundle bundle : aircraftMap.values()) {
+            updateAircraftBeaconMarker(bundle);
+        }
+    }
 
-    private Circle rangeCircle;
-    //Timer mapTimer = new Timer();
+    private void updateKnownReceivers(final Map<String, ReceiverBundle> receiverMap) {
+        for (final ReceiverBundle bundle : receiverMap.values()) {
+            updateReceiverBeaconMarker(bundle);
+        }
+    }
 
     boolean mapUpdating = false;
 
@@ -97,17 +107,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         final int id = item.getItemId();
 
-        switch(id) {
-            case R.id.action_aprsfilter:
-                String aprsFilter = sharedPreferences.getString(getString(R.string.key_aprsfilter_preference), "");
-                editAprsFilter(aprsFilter);
-                break;
+        switch (id) {
             case R.id.action_settings:
                 Intent i = new Intent(this, PrefsActivity.class);
                 startActivityForResult(i, 2); //TODO: replace 2 with constant
 
                 Boolean showreceivers = sharedPreferences.getBoolean(getString(R.string.key_showreceivers_preference), true);
-                for (Marker m: receiverMarkerMap.values()) {
+                for (Marker m : receiverMarkerMap.values()) {
                     m.setVisible(showreceivers);
                 }
 
@@ -229,10 +235,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 boolean identified = intent.getBooleanExtra("identified", false);
 
                 boolean isOgnPrivate = known && (!tracked || !identified);
-                /*updateAircraftBeaconMarkerInDB(address, aircraftType, climbRate, lat, lon, alt, (int) groundSpeed,
-                        regNumber, CN, model, isOgnPrivate, receiverName, track);*/
-                updateAircraftBeaconMarkerOnMap(address, aircraftType, climbRate, lat, lon, alt, (int) groundSpeed,
-                        regNumber, CN, model, isOgnPrivate, receiverName, track);
+                if (!isOgnPrivate) {
+                    updateAircraftBeaconMarker(address, aircraftType, climbRate, lat, lon, alt, (int) groundSpeed, regNumber, CN, model);
+                }
             }
         };
 
@@ -242,8 +247,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @Override
             public void onReceive(Context context, Intent intent) {
                 // ReceiverBeacon
-                String name = intent.getStringExtra("id");
                 float recInputNoise = intent.getFloatExtra("recInputNoise", 0);
+                String version = intent.getStringExtra("version");
+                String platform = intent.getStringExtra("platform");
+                int numericVersion = intent.getIntExtra("numericVersion", 0);
 
                 // OgnBeacon
                 String id = intent.getStringExtra("id");
@@ -251,10 +258,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 double lat = intent.getDoubleExtra("lat", 0);
                 double lon = intent.getDoubleExtra("lon", 0);
                 float alt = intent.getFloatExtra("alt", 0);
-                int track = intent.getIntExtra("track", 0);
-                float groundSpeed = intent.getFloatExtra("groundSpeed", 0);
-                String rawPacket = intent.getStringExtra("rawPacket");
 
+                // Computed values
+                int aircraftCounter = intent.getIntExtra("aircraftCounter", 0);
+                int maxAircraftCounter = intent.getIntExtra("maxAircraftCounter", 0);
+
+                int beaconCounter = intent.getIntExtra("beaconCounter", 0);
+                int maxBeaconCounter = intent.getIntExtra("maxBeaconCounter", 0);
+                if (lat != 0 && lon != 0)
                 updateReceiverBeaconMarkerOnMap(id, lat, lon, alt, recInputNoise);
             }
         };
@@ -285,7 +296,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 if (locManager != null) {
                     Location location = locManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
                     if (location != null) {
-                        aprsFilter = latLngToAprsFilter(new LatLng(location.getLatitude(), location.getLongitude()));
+                        aprsFilter = AprsFilterManager.latLngToAprsFilter(location.getLatitude(), location.getLongitude());
                     }
                 }
                 editEmptyAprsFilter(aprsFilter);
@@ -304,6 +315,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         float recInputNoise = receiver.getRecInputNoise();
 
         updateReceiverBeaconMarkerOnMap(receiverName, lat, lon, alt, recInputNoise);
+    private void updateReceiverBeaconMarker(ReceiverBundle bundle) {
+        ReceiverBeacon beacon = bundle.receiverBeacon;
+        updateReceiverBeaconMarker(beacon.getId(), beacon.getLat(), beacon.getLon(), beacon.getAlt(), beacon.getRecInputNoise(), bundle.aircrafts.size(), ReceiverBundle.maxAircraftCounter, bundle.beaconCount, ReceiverBundle.maxBeaconCounter);
     }
 
     private void updateReceiverBeaconMarkerOnMap(String receiverName, double lat, double lon, float altitude, float recInputNoise) {
@@ -320,23 +334,24 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         Boolean showReceivers = sharedPreferences.getBoolean(getString(R.string.key_showreceivers_preference), false);
+        Boolean isActive = (sharedPreferences.getBoolean(getString(R.string.key_shownotactive_preference), true) || aircraftCounter > 0 || beaconCounter > 0);
 
-        m.setVisible(showReceivers);
+        m.setVisible(showReceivers && isActive);
 
-        m.setTitle(receiverName + " (" + altitude + "m)");
-        m.setSnippet("Noise: " + recInputNoise + "dB");
+        String title = receiverName + " (" + alt + "m)";
+        String content = "Aircrafts: " + aircraftCounter + ", Beacons: " + beaconCounter;
 
-        int color = Color.rgb(128, 255, 0);
-        if (recInputNoise < -3.0) {
-            color = Color.rgb(128, 128, 255);
-        } else if (recInputNoise < 0) {
-            color = Color.rgb(128, 255, 255);
-        } else if (recInputNoise < 3) {
-            color = Color.rgb(128, 255, 128);
-        } else if (recInputNoise < 10) {
-            color = Color.rgb(255, 255, 128);
+        m.setTitle(title);
+        m.setSnippet(content);
+
+        float hue;
+        String colorisation = sharedPreferences.getString(getString(R.string.key_receiver_colorisation_preference), getString(R.string.aircraft_count));
+        if (colorisation.equals(getString(R.string.aircraft_count))) {
+            hue = Utils.getHue(aircraftCounter, 0, maxAircraftCounter, 0, 270);
+        } else if (colorisation.equals(getString(R.string.beacon_count))) {
+            hue = Utils.getHue(beaconCounter, 0, maxBeaconCounter, 0, 270);
         } else {
-            color = Color.rgb(255, 128, 128);
+            hue = Utils.getHue(alt, 0, 3000, 0, 270);
         }
 
         //m.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE));
@@ -347,7 +362,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         int iconMinSize = 72;   // sufficient for "808"
         int delta = Math.max(0, iconMinSize - icon.getWidth());
         iconGenerator.setContentPadding(delta / 2, 0, delta / 2, 0);
-        iconGenerator.setColor(color);
+        iconGenerator.setColor(Color.HSVToColor(new float[]{hue, (float)255, (float)255}));
         iconGenerator.setTextAppearance(R.style.TextColorBlack);
         icon = iconGenerator.makeIcon(receiverName);
 
@@ -359,20 +374,19 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
-    private void updateAircraftBeaconMarker(AircraftBeacon aircraftBeacon, AircraftDescriptor aircraftDescriptor) {
+    private void updateAircraftBeaconMarker(AircraftBundle bundle) {
+        AircraftBeacon aircraftBeacon = bundle.aircraftBeacon;
+        AircraftDescriptor aircraftDescriptor = bundle.aircraftDescriptor;
+
         boolean isOgnPrivate = aircraftDescriptor.isKnown() && (!aircraftDescriptor.isTracked() || !aircraftDescriptor.isIdentified());
-        /*updateAircraftBeaconMarkerInDB(aircraftBeacon.getAddress(), aircraftBeacon.getAircraftType(),
-                aircraftBeacon.getClimbRate(), aircraftBeacon.getLat(), aircraftBeacon.getLon(),
-                aircraftBeacon.getAlt(), aircraftBeacon.getGroundSpeed(), aircraftDescriptor.getRegNumber(),
-                aircraftDescriptor.getCN(), aircraftDescriptor.getModel(), isOgnPrivate, aircraftBeacon.getReceiverName(),
-                aircraftBeacon.getTrack());*/
+        if (!isOgnPrivate) {
+        }
         updateAircraftBeaconMarkerOnMap(aircraftBeacon.getAddress(), aircraftBeacon.getAircraftType(),
                 aircraftBeacon.getClimbRate(), aircraftBeacon.getLat(), aircraftBeacon.getLon(),
                 aircraftBeacon.getAlt(), aircraftBeacon.getGroundSpeed(), aircraftDescriptor.getRegNumber(),
                 aircraftDescriptor.getCN(), aircraftDescriptor.getModel(), isOgnPrivate, aircraftBeacon.getReceiverName(),
                 aircraftBeacon.getTrack());
     }
-
 
 
 
@@ -407,12 +421,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         m.setRotation(track + 180); //with 180 the pin shows to north on 0 degree from track
 
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-        String symbol = sharedPreferences.getString(getString(R.string.key_symbol_preference), "(default)");
-        String colorisation = sharedPreferences.getString(getString(R.string.key_colorisation_preference), getString(R.string.altitude));
+        String colorisation = sharedPreferences.getString(getString(R.string.key_aircraft_colorisation_preference), getString(R.string.altitude));
         Boolean showaircrafts = sharedPreferences.getBoolean(getString(R.string.key_showaircrafts_preference), true);
         Boolean shownonmoving = sharedPreferences.getBoolean(getString(R.string.key_shownonmoving_preference), true);
+        Boolean showregistration = sharedPreferences.getBoolean(getString(R.string.key_showregistration_preference), true);
 
-        if (!showaircrafts || !shownonmoving && groundSpeed < 5 || isOgnPrivate) {
+        if (!showaircrafts || !shownonmoving && groundSpeed < 5) {
             m.setVisible(false);
             ognService.mapUpdatingStatus(false);
             return;
@@ -422,30 +436,34 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
         // make snippet
+        String title;
         if (regNumber != null && !regNumber.isEmpty()) {
-            String title = regNumber;
+            title = regNumber;
             if (model != null && !model.isEmpty()) {
                 title += " (" + model + ")";
             }
-            m.setTitle(title);
         } else {
-            m.setTitle(address);
+            title = address;
         }
+        String content = String.format(Locale.US,"alt:%d gs:%d, vs:%.1f",  (int) alt, (int) groundSpeed, climbRate);
         m.setSnippet("alt:" + (int) alt + " gs:" + groundSpeed + " vs:" + String.format("%.1f", climbRate)
         + " Receiver:" + receiverName);
+
+        m.setTitle(title);
+        m.setSnippet(content);
 
 
         // make color of the marker
         float hue = 0;
-        int color = 0;
+        int color = Color.rgb(255, 255, 255);
         if (colorisation.equals(getString(R.string.altitude))) {
             final float minAlt = 500.0f;
             final float maxAlt = 3000.0f;
-            hue = (Math.min(Math.max(minAlt, alt), maxAlt) - minAlt) / (maxAlt - minAlt) * 240.0f;
+            hue = Utils.getHue(alt, minAlt, maxAlt, 0, 270);
         } else if (colorisation.equals(getString(R.string.speed))) {
             final float minSpeed = 50.0f;
             final float maxSpeed = 285.0f;
-            hue = (1.0f - (Math.min(Math.max(minSpeed, groundSpeed), maxSpeed) - minSpeed) / (maxSpeed - minSpeed)) * 240.0f;
+            hue = Utils.getHue(groundSpeed, minSpeed, maxSpeed, 0, 270);
         } else if (colorisation.equals(getString(R.string.aircraft_type))) {
             switch (aircraftType) {
                 //case UNKNOWN:
@@ -497,7 +515,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
         // make icon
-        if (!colorisation.equals(getString(R.string.aircraft_type)) || ((regNumber == null || regNumber.isEmpty()) && (CN == null || CN.isEmpty()))) {
+        if (!showregistration || ((regNumber == null || regNumber.isEmpty()) && (CN == null || CN.isEmpty()))) {
             if (m == null) { ///why is this sometimes true?
                 ognService.mapUpdatingStatus(false);
                 return;
@@ -505,7 +523,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             m.setIcon(BitmapDescriptorFactory.defaultMarker(hue)); //CAUTION: very slow process!
             //m.setIcon(BitmapDescriptorFactory.defaultMarker()); //TODO: fix this workaround
         } else {
-            String title;
             if (CN == null || CN.isEmpty()) {
                 if (regNumber.length() > 1) {
                     title = regNumber.substring(regNumber.length() - 2, regNumber.length());
@@ -523,7 +540,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             int iconMinSize = 72;   // sufficient for "808"
             int delta = Math.max(0, iconMinSize - icon.getWidth());
             iconGenerator.setContentPadding(delta / 2, 0, delta / 2, 0);
-            iconGenerator.setColor(color);
+            iconGenerator.setColor(Color.HSVToColor(new float[]{hue, 255, 255}));
             iconGenerator.setTextAppearance(R.style.TextColorBlack);
             icon = iconGenerator.makeIcon(title);
 
@@ -625,19 +642,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
             @Override
             public void onMapLongClick(LatLng latLng) {
-                String aprsFilter = latLngToAprsFilter(latLng);
+                String aprsFilter = AprsFilterManager.latLngToAprsFilter(latLng.latitude, latLng.longitude);
                 editAprsFilter(aprsFilter);
             }
         });
     }
 
-    private String latLngToAprsFilter(LatLng latLng) {
-        return String.format(Locale.US, "r/%1$.3f/%2$.3f/%3$.1f", latLng.latitude, latLng.longitude, 100.0);
-    }
-
     private void editAprsFilter(final String aprsFilter) {
         View view = getLayoutInflater().inflate(R.layout.dialog_aprsfilter, null);
-        final EditText et = (EditText) view.findViewById(R.id.editTextOwner);
+        final EditText et = view.findViewById(R.id.editTextOwner);
         et.setText(aprsFilter);
 
         new AlertDialog.Builder(this).setView(view)
@@ -651,13 +664,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         String aprsFilterSaved = sharedPreferences.getString(getString(R.string.key_aprsfilter_preference), "");
 
                         if (!aprsFilterModified.equals(aprsFilterSaved)) {
-                            sharedPreferences.edit().putString(getString(R.string.key_aprsfilter_preference), aprsFilterModified).commit();
+                            sharedPreferences.edit().putString(getString(R.string.key_aprsfilter_preference), aprsFilterModified).apply();
                             startService(new Intent(getBaseContext(), OgnService.class));
                             updateAprsFilterRange(aprsFilterModified);
                         }
                     }
                 })
-                .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener(){
+                .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int id) {
                         // do nothing
@@ -668,7 +681,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private void editEmptyAprsFilter(final String aprsFilter) {
         View view = getLayoutInflater().inflate(R.layout.dialog_aprsfilter, null);
-        final EditText et = (EditText) view.findViewById(R.id.editTextOwner);
+        final EditText et = view.findViewById(R.id.editTextOwner);
         et.setText(aprsFilter);
 
         new AlertDialog.Builder(this).setView(view)
@@ -681,7 +694,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         String aprsFilterModified = et.getText().toString();
 
                         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-                        sharedPreferences.edit().putString(getString(R.string.key_aprsfilter_preference), aprsFilterModified).commit();
+                        sharedPreferences.edit().putString(getString(R.string.key_aprsfilter_preference), aprsFilterModified).apply();
                         startService(new Intent(getBaseContext(), OgnService.class));
                         updateAprsFilterRange(aprsFilterModified);
                     }
@@ -695,7 +708,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
         rangeCircle.setVisible(false);
 
-        AprsFilterParser.Circle circle = AprsFilterParser.parse(aprsFilter);
+        AprsFilterManager.Circle circle = AprsFilterManager.parse(aprsFilter);
         if (circle != null) {
             rangeCircle.setCenter(new LatLng(circle.lat, circle.lon));
             rangeCircle.setRadius(circle.radius * 1000);

@@ -24,11 +24,11 @@ public class CustomAircraftDescriptorAdapter extends ArrayAdapter<CustomAircraft
         LayoutInflater inflater = (LayoutInflater) context
                 .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         View rowView = inflater.inflate(R.layout.rowlayout, parent, false);
-        TextView tvAddress = (TextView) rowView.findViewById(R.id.column_address);
-        TextView tvRegNumber = (TextView) rowView.findViewById(R.id.column_regNumber);
-        TextView tvCN = (TextView) rowView.findViewById(R.id.column_CN);
-        TextView tvModel = (TextView) rowView.findViewById(R.id.column_model);
-        TextView tvOwner = (TextView) rowView.findViewById(R.id.column_owner);
+        TextView tvAddress = rowView.findViewById(R.id.column_address);
+        TextView tvRegNumber = rowView.findViewById(R.id.column_regNumber);
+        TextView tvCN = rowView.findViewById(R.id.column_CN);
+        TextView tvModel = rowView.findViewById(R.id.column_model);
+        TextView tvOwner = rowView.findViewById(R.id.column_owner);
         //ImageView imageView = (ImageView) rowView.findViewById(R.id.icon);
 
         CustomAircraftDescriptor cad = values[position];

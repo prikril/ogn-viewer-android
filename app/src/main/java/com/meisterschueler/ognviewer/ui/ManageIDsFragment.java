@@ -1,4 +1,4 @@
-package com.meisterschueler.ognviewer;
+package com.meisterschueler.ognviewer.ui;
 
 import android.app.ListFragment;
 import android.os.Bundle;
@@ -7,6 +7,13 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
+
+import com.meisterschueler.ognviewer.AircraftDescriptorProviderHelper;
+import com.meisterschueler.ognviewer.AircraftDialog;
+import com.meisterschueler.ognviewer.CustomAircraftDescriptor;
+import com.meisterschueler.ognviewer.CustomAircraftDescriptorAdapter;
+import com.meisterschueler.ognviewer.CustomAircraftDescriptorProvider;
+import com.meisterschueler.ognviewer.R;
 
 import java.util.Map;
 
@@ -26,7 +33,7 @@ public class ManageIDsFragment extends ListFragment {
     public boolean onOptionsItemSelected(MenuItem item) {
         final int id = item.getItemId();
 
-        switch(id) {
+        switch (id) {
             case R.id.action_add_item:
                 AircraftDialog.showDialog(getActivity(), "");
 
@@ -44,7 +51,7 @@ public class ManageIDsFragment extends ListFragment {
         super.onActivityCreated(savedInstanceState);
 
         CustomAircraftDescriptorProvider adp1 = (CustomAircraftDescriptorProvider) AircraftDescriptorProviderHelper.getCustomDbAircraftDescriptorProvider();
-        Map<String,CustomAircraftDescriptor> aircraftDescriptorMap =  adp1.getAircraftDescriptorMap();
+        Map<String, CustomAircraftDescriptor> aircraftDescriptorMap = adp1.getAircraftDescriptorMap();
 
         CustomAircraftDescriptorAdapter adapter = new CustomAircraftDescriptorAdapter(getActivity(), aircraftDescriptorMap.values().toArray(new CustomAircraftDescriptor[aircraftDescriptorMap.size()]));
         setListAdapter(adapter);
