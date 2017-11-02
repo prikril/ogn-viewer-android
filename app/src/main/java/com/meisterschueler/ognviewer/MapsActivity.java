@@ -106,11 +106,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 Intent i = new Intent(this, PrefsActivity.class);
                 startActivityForResult(i, 2); //TODO: replace 2 with constant
 
-                Boolean showreceivers = sharedPreferences.getBoolean(getString(R.string.key_showreceivers_preference), true);
-                for (Marker m : receiverMarkerMap.values()) {
-                    m.setVisible(showreceivers);
-                }
-
                 break;
             case R.id.action_manageids:
                 Intent i2 = new Intent(this, ManageIDsActivity.class);
@@ -182,6 +177,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
             String aprsFilter = sharedPreferences.getString(getString(R.string.key_aprsfilter_preference), "");
             updateAprsFilterRange(aprsFilter);
+
+            Boolean showreceivers = sharedPreferences.getBoolean(getString(R.string.key_showreceivers_preference), true);
+            for (Marker m : receiverMarkerMap.values()) {
+                m.setVisible(showreceivers);
+            }
         }
     }
 
@@ -263,9 +263,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                 int beaconCounter = intent.getIntExtra("beaconCounter", 0);
                 int maxBeaconCounter = intent.getIntExtra("maxBeaconCounter", 0);
-                if (lat != 0 && lon != 0)
-                updateReceiverBeaconMarkerOnMap(id, lat, lon, alt, recInputNoise,
-                        aircraftCounter, maxAircraftCounter, beaconCounter, maxBeaconCounter);
+                if (lat != 0 && lon != 0) {
+                    updateReceiverBeaconMarkerOnMap(id, lat, lon, alt, recInputNoise,
+                            aircraftCounter, maxAircraftCounter, beaconCounter, maxBeaconCounter);
+                }
             }
         };
 
@@ -319,8 +320,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         float recInputNoise = beacon.getRecInputNoise();
         int aircraftCounter = bundle.aircrafts.size();
         int beaconCounter = bundle.beaconCount;
-
-
 
         updateReceiverBeaconMarkerOnMap(receiverName, lat, lon, alt, recInputNoise,
                 aircraftCounter, ReceiverBundle.maxAircraftCounter,
@@ -404,10 +403,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
     private void pauseUpdatingMap() {
-        //mapTimer.cancel();
-        //mapTimer.purge();
         if (ognService != null) {
             ognService.pauseUpdatingMap();
+        }
+    }
+
+    private void resumeUpdatingMap() {
+        if (ognService != null) {
+            ognService.resumeUpdatingMap(mMap.getProjection().getVisibleRegion().latLngBounds);
         }
     }
 
@@ -609,7 +612,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         bindService(new Intent(this, OgnService.class), mConnection, Context.BIND_AUTO_CREATE);
 
         checkSetUpMap();
-        //resumeUpdatingMap(); //start timer for updating map
+        resumeUpdatingMap();
 
     }
 
@@ -760,9 +763,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     public void onCameraIdle() {
-        //resumeUpdatingMap(); //reconnect service?
-        if (ognService != null) {
-            ognService.resumeUpdatingMap(mMap.getProjection().getVisibleRegion().latLngBounds);
-        }
+        resumeUpdatingMap();
     }
 }
