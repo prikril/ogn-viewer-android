@@ -48,27 +48,28 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
-    private OgnService s;
+public class MapsActivity extends FragmentActivity implements OnMapReadyCallback,
+        GoogleMap.OnCameraMoveStartedListener, GoogleMap.OnCameraIdleListener {
+    private OgnService ognService;
     private ServiceConnection mConnection = new ServiceConnection() {
 
         public void onServiceConnected(ComponentName className, IBinder binder) {
-            OgnService.LocalBinder b = (OgnService.LocalBinder) binder;
-            s = b.getService();
+            OgnService.LocalBinder localBinder = (OgnService.LocalBinder) binder;
+            ognService = localBinder.getService();
             
-            for (final OgnService.AircraftBundle bundle : s.aircraftMap.values()) {
+            for (final OgnService.AircraftBundle bundle : ognService.aircraftBundleMap.values()) {
                 AircraftBeacon aircraftBeacon = bundle.aircraftBeacon;
                 AircraftDescriptor aircraftDescriptor = bundle.aircraftDescriptor;
                 updateAircraftBeaconMarker(aircraftBeacon, aircraftDescriptor);
             }
 
-            for (final ReceiverBeacon receiver : s.receiverMap.values()) {
+            for (final ReceiverBeacon receiver : ognService.receiverBundleMap.values()) {
                 updateReceiverBeaconMarker(receiver);
             }
         }
 
         public void onServiceDisconnected(ComponentName className) {
-            s = null;
+            ognService = null;
         }
     };
 
@@ -76,9 +77,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private BroadcastReceiver aircraftReceiver;
     private BroadcastReceiver receiverReceiver;
+    private BroadcastReceiver actionReceiver;
     private Map<String,Marker> aircraftMarkerMap = new HashMap<String,Marker>();
     private Map<String,Marker> receiverMarkerMap = new HashMap<String,Marker>();
+
     private Circle rangeCircle;
+    //Timer mapTimer = new Timer();
+
+    boolean mapUpdating = false;
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -155,7 +161,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 break;
             case R.id.action_exit:
                 stopService(new Intent(getBaseContext(), OgnService.class));
-                LocalBroadcastManager.getInstance(this).unregisterReceiver(aircraftReceiver);
+                LocalBroadcastManager.getInstance(this).unregisterReceiver(aircraftReceiver); //TODO: also unregister other services?
                 finish();
         }
 
@@ -182,6 +188,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         setContentView(R.layout.fragment_maps);
         checkSetUpMap();
+
 
         aircraftReceiver = new BroadcastReceiver() {
             @Override
@@ -222,7 +229,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 boolean identified = intent.getBooleanExtra("identified", false);
 
                 boolean isOgnPrivate = known && (!tracked || !identified);
-                updateAircraftBeaconMarker(address, aircraftType, climbRate, lat, lon, alt, (int) groundSpeed, regNumber, CN, model, isOgnPrivate, receiverName);
+                /*updateAircraftBeaconMarkerInDB(address, aircraftType, climbRate, lat, lon, alt, (int) groundSpeed,
+                        regNumber, CN, model, isOgnPrivate, receiverName, track);*/
+                updateAircraftBeaconMarkerOnMap(address, aircraftType, climbRate, lat, lon, alt, (int) groundSpeed,
+                        regNumber, CN, model, isOgnPrivate, receiverName, track);
             }
         };
 
@@ -245,11 +255,27 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 float groundSpeed = intent.getFloatExtra("groundSpeed", 0);
                 String rawPacket = intent.getStringExtra("rawPacket");
 
-                updateReceiverBeaconMarker(id, lat, lon, alt, recInputNoise);
+                updateReceiverBeaconMarkerOnMap(id, lat, lon, alt, recInputNoise);
             }
         };
 
         LocalBroadcastManager.getInstance(this).registerReceiver((receiverReceiver), new IntentFilter("RECEIVER-BEACON"));
+
+        //action receiver
+        actionReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                String action = intent.getStringExtra("AIRCRAFT_ACTION");
+                if (action.equals("REMOVE_AIRCRAFT")) {
+                    String address = intent.getStringExtra("address");
+                    if (address != null) {
+                        removeAircraftFromMap(address);
+                    }
+                }
+            }
+        };
+        LocalBroadcastManager.getInstance(this).registerReceiver((actionReceiver), new IntentFilter("AIRCRAFT_ACTION"));
+
 
         if (savedInstanceState == null) {
             SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
@@ -277,10 +303,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         float alt = receiver.getAlt();
         float recInputNoise = receiver.getRecInputNoise();
 
-        updateReceiverBeaconMarker(receiverName, lat, lon, alt, recInputNoise);
+        updateReceiverBeaconMarkerOnMap(receiverName, lat, lon, alt, recInputNoise);
     }
 
-    private void updateReceiverBeaconMarker(String receiverName, double lat, double lon, float altitude, float recInputNoise) {
+    private void updateReceiverBeaconMarkerOnMap(String receiverName, double lat, double lon, float altitude, float recInputNoise) {
         Marker m;
         boolean infoWindowShown = false;
         if (!receiverMarkerMap.containsKey(receiverName)) {
@@ -335,26 +361,50 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private void updateAircraftBeaconMarker(AircraftBeacon aircraftBeacon, AircraftDescriptor aircraftDescriptor) {
         boolean isOgnPrivate = aircraftDescriptor.isKnown() && (!aircraftDescriptor.isTracked() || !aircraftDescriptor.isIdentified());
-        updateAircraftBeaconMarker(aircraftBeacon.getAddress(), aircraftBeacon.getAircraftType(),
+        /*updateAircraftBeaconMarkerInDB(aircraftBeacon.getAddress(), aircraftBeacon.getAircraftType(),
                 aircraftBeacon.getClimbRate(), aircraftBeacon.getLat(), aircraftBeacon.getLon(),
                 aircraftBeacon.getAlt(), aircraftBeacon.getGroundSpeed(), aircraftDescriptor.getRegNumber(),
-                aircraftDescriptor.getCN(), aircraftDescriptor.getModel(), isOgnPrivate, aircraftBeacon.getReceiverName());
+                aircraftDescriptor.getCN(), aircraftDescriptor.getModel(), isOgnPrivate, aircraftBeacon.getReceiverName(),
+                aircraftBeacon.getTrack());*/
+        updateAircraftBeaconMarkerOnMap(aircraftBeacon.getAddress(), aircraftBeacon.getAircraftType(),
+                aircraftBeacon.getClimbRate(), aircraftBeacon.getLat(), aircraftBeacon.getLon(),
+                aircraftBeacon.getAlt(), aircraftBeacon.getGroundSpeed(), aircraftDescriptor.getRegNumber(),
+                aircraftDescriptor.getCN(), aircraftDescriptor.getModel(), isOgnPrivate, aircraftBeacon.getReceiverName(),
+                aircraftBeacon.getTrack());
     }
 
-    private void updateAircraftBeaconMarker(String address, AircraftType aircraftType, float climbRate,
+
+
+
+
+    private void pauseUpdatingMap() {
+        //mapTimer.cancel();
+        //mapTimer.purge();
+        if (ognService != null) {
+            ognService.pauseUpdatingMap();
+        }
+    }
+
+    private void updateAircraftBeaconMarkerOnMap(String address, AircraftType aircraftType, float climbRate,
                                             double lat, double lon, float alt, float groundSpeed,
                                             String regNumber, String CN, String model, boolean isOgnPrivate,
-                                            String receiverName) {
+                                            String receiverName, int track) {
+        ognService.mapUpdatingStatus(true);
         Marker m;
         boolean infoWindowShown = false;
+
+        System.out.println("updateMarker for address: " + address); //debug
+
         if (!aircraftMarkerMap.containsKey(address)) {
             m = mMap.addMarker(new MarkerOptions().position(new LatLng(lat, lon)));
             aircraftMarkerMap.put(address, m);
         } else {
             m = aircraftMarkerMap.get(address);
+
             infoWindowShown = m.isInfoWindowShown();
             m.setPosition(new LatLng(lat, lon));
         }
+        m.setRotation(track + 180); //with 180 the pin shows to north on 0 degree from track
 
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         String symbol = sharedPreferences.getString(getString(R.string.key_symbol_preference), "(default)");
@@ -362,8 +412,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         Boolean showaircrafts = sharedPreferences.getBoolean(getString(R.string.key_showaircrafts_preference), true);
         Boolean shownonmoving = sharedPreferences.getBoolean(getString(R.string.key_shownonmoving_preference), true);
 
-        if (!showaircrafts || !shownonmoving && groundSpeed < 5) { // || isOgnPrivate) { // auskommentiert 2017-08-04
+        if (!showaircrafts || !shownonmoving && groundSpeed < 5 || isOgnPrivate) {
             m.setVisible(false);
+            ognService.mapUpdatingStatus(false);
             return;
         } else {
             m.setVisible(true);
@@ -447,7 +498,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         // make icon
         if (!colorisation.equals(getString(R.string.aircraft_type)) || ((regNumber == null || regNumber.isEmpty()) && (CN == null || CN.isEmpty()))) {
-            m.setIcon(BitmapDescriptorFactory.defaultMarker(hue));
+            if (m == null) { ///why is this sometimes true?
+                ognService.mapUpdatingStatus(false);
+                return;
+            }
+            m.setIcon(BitmapDescriptorFactory.defaultMarker(hue)); //CAUTION: very slow process!
+            //m.setIcon(BitmapDescriptorFactory.defaultMarker()); //TODO: fix this workaround
         } else {
             String title;
             if (CN == null || CN.isEmpty()) {
@@ -471,6 +527,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             iconGenerator.setTextAppearance(R.style.TextColorBlack);
             icon = iconGenerator.makeIcon(title);
 
+            if (m == null) { //why is this sometimes true?
+                ognService.mapUpdatingStatus(false);
+                return;
+            }
             m.setIcon(BitmapDescriptorFactory.fromBitmap(icon));
         }
 
@@ -479,9 +539,22 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         if (infoWindowShown) {
             m.showInfoWindow();
         }
+        ognService.mapUpdatingStatus(false);
+        System.out.println("updatedMarker for address: " + address); //debug
     }
 
-
+    private void removeAircraftFromMap(String address) {
+        if (aircraftMarkerMap.containsKey(address)) {
+            Marker m;
+            m = aircraftMarkerMap.get(address);
+            if (m == null) {
+                //continue;
+                return;
+            }
+            m.remove(); //remove marker from mMap
+            aircraftMarkerMap.remove(address);
+        }
+    }
 
     @Override
     protected void onPause() {
@@ -489,13 +562,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         unbindService(mConnection);
 
         // Save current lat, lon, zoom
-        float lat = (float)mMap.getCameraPosition().target.latitude;
-        float lon = (float)mMap.getCameraPosition().target.longitude;
-        float zoom = mMap.getCameraPosition().zoom;
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-        sharedPreferences.edit().putFloat(getString(R.string.key_latitude_preference), lat).commit();
-        sharedPreferences.edit().putFloat(getString(R.string.key_longitude_preference), lon).commit();
-        sharedPreferences.edit().putFloat(getString(R.string.key_zoom_preference), zoom).commit();
+        if (mMap != null) {
+            float lat = (float) mMap.getCameraPosition().target.latitude;
+            float lon = (float) mMap.getCameraPosition().target.longitude;
+            float zoom = mMap.getCameraPosition().zoom;
+            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+            sharedPreferences.edit().putFloat(getString(R.string.key_latitude_preference), lat).commit();
+            sharedPreferences.edit().putFloat(getString(R.string.key_longitude_preference), lon).commit();
+            sharedPreferences.edit().putFloat(getString(R.string.key_zoom_preference), zoom).commit();
+        }
+
+        pauseUpdatingMap();
     }
 
     @Override
@@ -504,7 +581,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         bindService(new Intent(this, OgnService.class), mConnection, Context.BIND_AUTO_CREATE);
 
         checkSetUpMap();
-
+        //resumeUpdatingMap(); //start timer for updating map
 
     }
 
@@ -517,10 +594,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         if (mMap == null) {
             SupportMapFragment suppMapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
             suppMapFragment.getMapAsync(this);
-
-            if (mMap != null) {
-                setUpMap();
-            }
         }
 
 
@@ -632,7 +705,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
+        if (mMap != null) return; //use first loaded map only
         mMap = googleMap;
+        mMap.getUiSettings().setRotateGesturesEnabled(false); //do not allow rotating the map
+        mMap.setOnCameraIdleListener(this);
+        mMap.setOnCameraMoveStartedListener(this);
+        setUpMap();
 
         // Restore lat, lon, zoom
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
@@ -649,5 +727,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         //SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         String aprsFilter = sharedPreferences.getString(getString(R.string.key_aprsfilter_preference), "");
         updateAprsFilterRange(aprsFilter);
+    }
+
+    @Override
+    public void onCameraMoveStarted(int i) {
+        pauseUpdatingMap();
+    }
+
+    @Override
+    public void onCameraIdle() {
+        //resumeUpdatingMap(); //reconnect service?
+        if (ognService != null) {
+            ognService.resumeUpdatingMap(mMap.getProjection().getVisibleRegion().latLngBounds);
+        }
     }
 }
