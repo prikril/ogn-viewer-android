@@ -32,6 +32,15 @@
             android:summary="@string/summary_showreceivers_preference"
             android:defaultValue="false"/>
 
+        <ListPreference
+            android:key="@string/key_map_type_preference"
+            android:title="@string/title_map_type_preference"
+            android:summary="@string/summary_map_type_preference"
+            android:entries="@array/entries_map_type_preference"
+            android:entryValues="@array/entryvalues_map_type_preference"
+            android:dialogTitle="@string/dialog_title_map_type_preference"
+            android:defaultValue="@string/terrain"/>
+
     </PreferenceCategory>
 
     <PreferenceCategory

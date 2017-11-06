@@ -180,14 +180,33 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         super.onActivityResult(requestCode, resultCode, data);
         if(requestCode == OPTION_SETTINGS)
         {
+            //aprs filter
             //String message = data.getStringExtra("MESSAGE"); //leave this for future usage
             SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
             String aprsFilter = sharedPreferences.getString(getString(R.string.key_aprsfilter_preference), "");
             updateAprsFilterRange(aprsFilter);
 
+            //map type
+            changeMapType();
+
+            //receivers
             Boolean showreceivers = sharedPreferences.getBoolean(getString(R.string.key_showreceivers_preference), true);
             for (Marker m : receiverMarkerMap.values()) { //TODO: profile this code, maybe slow!
                 m.setVisible(showreceivers);
+            }
+        }
+    }
+
+    private void changeMapType() {
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        String mapType = sharedPreferences.getString(getString(R.string.key_map_type_preference), getString(R.string.terrain));
+        if (mMap != null) {
+            if (mapType.equals(getString(R.string.hybrid))) {
+                mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
+            } else if (mapType.equals(getString(R.string.satellite))) {
+                mMap.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
+            } else {
+                mMap.setMapType(GoogleMap.MAP_TYPE_TERRAIN);
             }
         }
     }
@@ -625,7 +644,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         checkSetUpMap();
         resumeUpdatingMap();
-
     }
 
     @Override
@@ -638,12 +656,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             SupportMapFragment suppMapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
             suppMapFragment.getMapAsync(this);
         }
-
-
     }
 
     private void setUpMap() {
-        mMap.setMapType(GoogleMap.MAP_TYPE_TERRAIN);
+        changeMapType();
         mMap.getUiSettings().setMapToolbarEnabled(false);
 
         mMap.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {

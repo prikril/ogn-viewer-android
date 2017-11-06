@@ -42,6 +42,11 @@
     <string name="title_showreceivers_preference">Show Receivers</string>
     <string name="summary_showreceivers_preference">off</string>
 
+    <string name="key_map_type_preference">map_type_aircraft_preference</string>
+    <string name="title_map_type_preference">Map type</string>
+    <string name="summary_map_type_preference">Terrain</string>
+    <string name="dialog_title_map_type_preference">Map type</string>
+
     <string name="key_shownonmoving_preference">shownonmoving_preference</string>
     <string name="title_shownonmoving_preference">Show Non-Moving</string>
     <string name="summary_shownonmoving_preference">on</string>
@@ -64,6 +69,10 @@
 
 
     <!-- Entry keys and values of arrays -->
+    <string name="terrain">Terrain</string>
+    <string name="hybrid">Hybrid</string>
+    <string name="satellite">Satellite</string>
+
     <string name="altitude">Altitude</string>
     <string name="speed">Speed</string>
     <string name="aircraft_type">Aircraft type</string>
