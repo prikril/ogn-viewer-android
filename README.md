@@ -3,6 +3,16 @@ Android app that visualizes the aircraft traffic fom [The Open Glider Network pr
 
 This is a fork of meisterschuelers ogn-viewer-android app.
 
+# Dependencies
+The app uses two repositories from glidernet:
+https://github.com/glidernet/ogn-commons-java
+and
+https://github.com/glidernet/ogn-client-java
+
+You need Eclipse and Maven to build the jar files.
+
+Use "maven install" to build them.
+
 # Building
 Use Android Studio to build the app.
 

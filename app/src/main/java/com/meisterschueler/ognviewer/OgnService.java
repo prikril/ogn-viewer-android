@@ -12,6 +12,7 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.meisterschueler.ognviewer.common.FlarmMessage;
@@ -46,25 +47,26 @@ import co.uk.rushorm.core.RushCore;
 
 public class OgnService extends Service implements AircraftBeaconListener, ReceiverBeaconListener {
 
+    private static final String TAG = "OgnService";
+
     TcpServer tcpServer;
 
     OgnClient ognClient;
     boolean connected = false;
     LocalBroadcastManager localBroadcastManager;
     IBinder binder = new LocalBinder();
-    Map<String, ReceiverBundle> receiverMap = new ConcurrentHashMap<>();
     //Map<String, AircraftBundle> aircraftMap = new ConcurrentHashMap<>(); //von upstream 2017-11-02
     private Map<String,Aircraft> aircraftMap = new HashMap<>(); //TODO: von dominik, entfernen? 2017-11-02
 
     int maxAircraftCounter = 0;
     int maxBeaconCounter = 0;
-    Map<String, ReceiverBundle> receiverBundleMap = new ConcurrentHashMap<String, ReceiverBundle>();
+    Map<String, ReceiverBundle> receiverBundleMap = new ConcurrentHashMap<>();
     Map<String, AircraftBundle> aircraftBundleMap = new ConcurrentHashMap<String, AircraftBundle>();
 
 
     LocationManager locManager;
     Location currentLocation = null;
-    ScheduledExecutorService scheduleTaskExecutor;
+    ScheduledExecutorService scheduledTaskExecutor;
     boolean refreshingActive = true;
 
     public interface UpdateListener {
@@ -105,7 +107,7 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
         AircraftBundle bundle = new AircraftBundle(aircraftBeacon, aircraftDescriptor);
         aircraftBundleMap.put(aircraftBeacon.getAddress(), bundle);
 
-        ReceiverBundle receiverBundle = receiverMap.get(aircraftBeacon.getReceiverName());
+        ReceiverBundle receiverBundle = receiverBundleMap.get(aircraftBeacon.getReceiverName());
         if (receiverBundle != null) {
             if (!receiverBundle.aircrafts.contains(aircraftBeacon.getId())) {
                 receiverBundle.aircrafts.add(aircraftBeacon.getId());
@@ -119,14 +121,12 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
             sendAircraftToMap(bundle);
         }
 
-
-
         //for debugging
         Calendar c = Calendar.getInstance();
         int seconds = c.get(Calendar.SECOND);
         int minutes = c.get(Calendar.MINUTE);
-        System.out.println(aircraftBundleMap.size() + " AircraftBeacons " + minutes + ":" + seconds); //debug
-        System.out.println("Last address: " + aircraftBeacon.getAddress()); //debug
+        Log.d(TAG,aircraftBundleMap.size() + " AircraftBeacons " + minutes + ":" + seconds);
+        Log.d(TAG,"Last address: " + aircraftBeacon.getAddress());
     }
 
     private void sendAircraftToMap(AircraftBundle aircraftBundle) {
@@ -180,12 +180,12 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
 
     @Override
     public void onUpdate(ReceiverBeacon receiverBeacon) {
-        ReceiverBundle bundle = receiverMap.get(receiverBeacon.getId());
+        ReceiverBundle bundle = receiverBundleMap.get(receiverBeacon.getId());
         if (bundle == null) {
             bundle = new ReceiverBundle(receiverBeacon);
         }
 
-        receiverMap.put(receiverBeacon.getId(), bundle);
+        receiverBundleMap.put(receiverBeacon.getId(), bundle);
 
         Intent intent = new Intent("RECEIVER-BEACON");
 
@@ -229,7 +229,7 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
         Calendar c = Calendar.getInstance();
         int seconds = c.get(Calendar.SECOND);
         int minutes = c.get(Calendar.MINUTE);
-        System.out.println(receiverBundleMap.size() + " ReceiverBeacons " + minutes + ":" + seconds);
+        Log.d(TAG, receiverBundleMap.size() + " ReceiverBeacons " + minutes + ":" + seconds);
     }
 
     @Override
@@ -306,7 +306,7 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
         tcpServer.stopServer();
     }
 
-
+    //do not delete! WIP 2017-11-05
     private void updateAircraftBeaconMarkerInDB(String address, AircraftType aircraftType, float climbRate,
                                                 double lat, double lon, float alt, float groundSpeed,
                                                 String regNumber, String cn, String model, boolean isOgnPrivate,
@@ -329,27 +329,26 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
         }
 
     }
+
     boolean timerCurrentlyRunning = false;
     LatLngBounds latLngBounds = new LatLngBounds(new LatLng(0, 0), new LatLng(0, 0));
 
     public void resumeUpdatingMap(LatLngBounds latLngBounds) {
         this.latLngBounds = latLngBounds;
         refreshingActive = true;
-        resumeUpdatingMap_Alt();
-        System.out.println("Service resumed updating map");
-    }
 
-    public void resumeUpdatingMap_Alt() {
-        scheduleTaskExecutor = new ScheduledThreadPoolExecutor(1);
-        scheduleTaskExecutor.scheduleWithFixedDelay(new Runnable() {
+        final long initialDelayInSeconds = 2L;
+        final long delayInSeconds = 2L;
+        scheduledTaskExecutor = new ScheduledThreadPoolExecutor(1);
+        scheduledTaskExecutor.scheduleWithFixedDelay(new Runnable() {
             @Override
             public void run() {
                 //TODO: add try catches
                 if (timerCurrentlyRunning) {
-                    return;
+                    return; //Should never happen! If this happens, two timers are active.
                 } else {
                     timerCurrentlyRunning = true;
-                    System.out.println("UpdateMap by timer " + new Date());
+                    Log.d(TAG, "Update map by timer at " + new Date());
                 }
                 aircraftMap = convertAricraftMap(aircraftBundleMap);
                 Iterator<String> it = aircraftMap.keySet().iterator();
@@ -358,7 +357,8 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
                     Aircraft aircraft = aircraftMap.get(address);
                     Date now = new Date();
                     long diffSeconds = (now.getTime() - aircraftMap.get(address).getLastSeen().getTime()) / 1000;
-                    if (diffSeconds > 60) { // remove markers that are older than 60 seconds
+                    // remove markers that are older than specified time e.g. 60 seconds to clean map
+                    if (diffSeconds > 60) { //TODO: let user set diffTime in settings
                         Intent intent = new Intent("AIRCRAFT_ACTION");
                         //intent.setAction("REMOVE_AIRCRAFT");
                         intent.putExtra("AIRCRAFT_ACTION", "REMOVE_AIRCRAFT");
@@ -366,17 +366,19 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
                         localBroadcastManager.sendBroadcast(intent);
 
                         it.remove();
-                        aircraftBundleMap.remove(address); //possible on concurrent map?
-                        System.out.println("Removed " + address + ", diff: " + diffSeconds + "s"); //debug
+                        aircraftBundleMap.remove(address);
+                        Log.d(TAG, "Removed " + address + ", diff: " + diffSeconds + "s");
                         continue;
                     }
-                    if (latLngBounds.contains(new LatLng(aircraft.getLat(), aircraft.getLon()))) {
-                        /*while (mapCurrentlyUpdating) {
+                    //do not delete WIP! 2017-11-05
+                    /*if (latLngBounds.contains(new LatLng(aircraft.getLat(), aircraft.getLon()))) {
+                        while (mapCurrentlyUpdating) {
                             //wait for finishing updateMaker
                             System.out.println("Waiting for end of updateMarker: " + address);
                         }
-                        sendAircraftToMap(aircraftBundleMap.get(address)); //refresh only visible markers*/
-                    }
+                        sendAircraftToMap(aircraftBundleMap.get(address)); //refresh only visible markers
+                    }*/
+                    //maybe the following code in mapsActivity
                     /*LatLngBounds latLngBounds = mMap.getProjection().getVisibleRegion().latLngBounds;
                     if (latLngBounds.contains(new LatLng(aircraft.getLat(), aircraft.getLon()))) {
                         runOnUiThread(new Runnable() {
@@ -392,24 +394,24 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
                         });
                     }*/
                 }
-                System.out.println("Finished updating map.");
+                Log.d(TAG, "Finished updating map.");
                 timerCurrentlyRunning = false;
             }
-        }, 2000, 2000, TimeUnit.MILLISECONDS); //Update aircrafts every second
+        }, initialDelayInSeconds, delayInSeconds, TimeUnit.SECONDS); //update aircrafts every few seconds
+
+        Log.d(TAG, "Service resumed updating map");
     }
 
     public void pauseUpdatingMap() {
         refreshingActive = false; //blocks intents to activity
-        //mapTimer.cancel();
-        //mapTimer.purge();
-        if (scheduleTaskExecutor != null) {
-            scheduleTaskExecutor.shutdownNow();
-            scheduleTaskExecutor = null;
+        if (scheduledTaskExecutor != null) {
+            scheduledTaskExecutor.shutdownNow();
+            scheduledTaskExecutor = null;
         }
 
         timerCurrentlyRunning = false;
 
-        System.out.println("Service paused updating map");
+        Log.d(TAG, "Service paused updating map");
     }
 
     private Map<String, Aircraft> convertAricraftMap(Map<String, AircraftBundle> aircraftBundleMap) {
