@@ -445,6 +445,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                             double lat, double lon, float alt, float groundSpeed,
                                             String regNumber, String CN, String model,
                                             String receiverName, int track) {
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+
         if (ognService == null) {
             return; //why does this happen? (sometimes during debug)
         }
@@ -463,9 +465,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             infoWindowShown = m.isInfoWindowShown();
             m.setPosition(new LatLng(lat, lon));
         }
-        m.setRotation(track + 180); //with 180 the pin shows to north on 0 degree from track
+        Boolean rotateAircraft = sharedPreferences.getBoolean(getString(R.string.key_rotate_aircraft_preference), false);
+        if (rotateAircraft) {
+            m.setRotation(track + 180); //with 180 the pin shows to north on 0 degree from track
+        } else {
+            m.setRotation(0); //default, to reset alredy rotated markers
+        }
 
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         String colorisation = sharedPreferences.getString(getString(R.string.key_aircraft_colorisation_preference), getString(R.string.altitude));
         Boolean showaircrafts = sharedPreferences.getBoolean(getString(R.string.key_showaircrafts_preference), true);
         Boolean shownonmoving = sharedPreferences.getBoolean(getString(R.string.key_shownonmoving_preference), true);
