@@ -216,7 +216,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.fragment_maps);
-        checkSetUpMap();
+        //TODO: why is this necessary in onCreate? dominik: 2017-11-12
+        checkSetUpMap();//already in onResume(), but seems to be not enough
 
 
         aircraftReceiver = new BroadcastReceiver() {
@@ -369,6 +370,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             m.setPosition(new LatLng(lat, lon));
         }
 
+        Log.d(TAG, "updating marker for receiver: " + receiverName + " " + new Date().getTime());
+
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         Boolean showReceivers = sharedPreferences.getBoolean(getString(R.string.key_showreceivers_preference), false);
         Boolean isActive = (sharedPreferences.getBoolean(getString(R.string.key_shownotactive_preference), true) || aircraftCounter > 0 || beaconCounter > 0);
@@ -380,6 +383,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         m.setTitle(title);
         m.setSnippet(content);
+
+        //attempt to speedup app
+        if (!showReceivers) {
+            return;
+        }
 
         float hue;
         String colorisation = sharedPreferences.getString(getString(R.string.key_receiver_colorisation_preference), getString(R.string.aircraft_count));
@@ -401,7 +409,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         iconGenerator.setContentPadding(delta / 2, 0, delta / 2, 0);
         iconGenerator.setColor(Color.HSVToColor(new float[]{hue, (float)255, (float)255}));
         iconGenerator.setTextAppearance(R.style.TextColorBlack);
-        icon = iconGenerator.makeIcon(receiverName);
+        icon = iconGenerator.makeIcon(receiverName); //CAUTION: sometimes causes OutOfMemoryError
 
         m.setIcon(BitmapDescriptorFactory.fromBitmap(icon));
 
@@ -409,6 +417,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         if (infoWindowShown) {
             m.showInfoWindow();
         }
+        Log.d(TAG, "updated marker for receiver: " + receiverName + " " + new Date().getTime());
     }
 
     private void updateAircraftBeaconMarker(AircraftBundle bundle) {
@@ -457,7 +466,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         Log.d(TAG, "updating marker for address: " + address + " " + new Date().getTime());
 
         if (!aircraftMarkerMap.containsKey(address)) {
-            m = mMap.addMarker(new MarkerOptions().position(new LatLng(lat, lon)));
+            if (mMap == null) {
+                return; //happens when orientation changes
+            } else {
+                m = mMap.addMarker(new MarkerOptions().position(new LatLng(lat, lon)));
+            }
             aircraftMarkerMap.put(address, m);
         } else {
             m = aircraftMarkerMap.get(address);
@@ -627,6 +640,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     protected void onPause() {
         super.onPause();
         unbindService(mConnection);
+        pauseUpdatingMap();
 
         // Save current lat, lon, zoom
         if (mMap != null) {
@@ -637,9 +651,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             sharedPreferences.edit().putFloat(getString(R.string.key_latitude_preference), lat).apply();
             sharedPreferences.edit().putFloat(getString(R.string.key_longitude_preference), lon).apply();
             sharedPreferences.edit().putFloat(getString(R.string.key_zoom_preference), zoom).apply();
+            //speedup for onResume? oh yes :)
+            mMap.clear();
         }
+        //additional speedup for onResume
+        rangeCircle = null;
+        aircraftMarkerMap.clear();
+        receiverMarkerMap.clear();
 
-        pauseUpdatingMap();
     }
 
     @Override
@@ -649,6 +668,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         bindService(new Intent(this, OgnService.class), mConnection, Context.BIND_AUTO_CREATE);
 
         checkSetUpMap();
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        String aprsFilter = sharedPreferences.getString(getString(R.string.key_aprsfilter_preference), "");
+        updateAprsFilterRange(aprsFilter); //necessary for the circle, because it was ereased in onPause
         resumeUpdatingMap();
     }
 
@@ -752,7 +774,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private void updateAprsFilterRange(String aprsFilter) {
         if (rangeCircle == null) {
-            rangeCircle = mMap.addCircle(new CircleOptions().center(new LatLng(0, 0)).radius(1).strokeColor(Color.RED));
+            if (mMap == null) {
+                return;
+            } else {
+                rangeCircle = mMap.addCircle(new CircleOptions().center(new LatLng(0, 0)).radius(1).strokeColor(Color.RED));
+            }
         }
         rangeCircle.setVisible(false);
 

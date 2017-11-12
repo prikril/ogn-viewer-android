@@ -126,7 +126,7 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
         int seconds = c.get(Calendar.SECOND);
         int minutes = c.get(Calendar.MINUTE);
         Log.d(TAG,aircraftBundleMap.size() + " AircraftBeacons " + minutes + ":" + seconds);
-        Log.d(TAG,"Last address: " + aircraftBeacon.getAddress());
+        Log.d(TAG,"Last aircraft: " + aircraftBeacon.getAddress());
     }
 
     private void sendAircraftToMap(AircraftBundle aircraftBundle) {
@@ -224,12 +224,15 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
         intent.putExtra("beaconCounter", bundle.beaconCount);
         intent.putExtra("maxBeaconCounter", maxBeaconCounter);
 
-        localBroadcastManager.sendBroadcast(intent);
+        if (refreshingActive) {
+            localBroadcastManager.sendBroadcast(intent);
+        }
         //for debugging
         Calendar c = Calendar.getInstance();
         int seconds = c.get(Calendar.SECOND);
         int minutes = c.get(Calendar.MINUTE);
         Log.d(TAG, receiverBundleMap.size() + " ReceiverBeacons " + minutes + ":" + seconds);
+        Log.d(TAG,"Last receiver: " + receiverBeacon.getId());
     }
 
     @Override
