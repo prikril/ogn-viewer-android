@@ -19,6 +19,7 @@ import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.LocalBroadcastManager;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -27,6 +28,7 @@ import android.widget.EditText;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
@@ -45,32 +47,38 @@ import org.ogn.commons.beacon.AircraftDescriptor;
 import org.ogn.commons.beacon.AircraftType;
 import org.ogn.commons.beacon.ReceiverBeacon;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
-public class MapsActivity extends FragmentActivity {
+public class MapsActivity extends FragmentActivity implements OnMapReadyCallback,
+        GoogleMap.OnCameraMoveStartedListener, GoogleMap.OnCameraIdleListener {
+
+    private static final String TAG = "MapsActivity";
+
     private OgnService ognService;
-    private GoogleMap mMap; // Might be null if Google Play services APK is not available.
     private Circle rangeCircle;
     private BroadcastReceiver aircraftReceiver;
     private BroadcastReceiver receiverReceiver;
+    private BroadcastReceiver actionReceiver;
     private Map<String, Marker> aircraftMarkerMap = new HashMap<>();
     private Map<String, Marker> receiverMarkerMap = new HashMap<>();
+    private GoogleMap mMap; // Might be null if Google Play services APK is not available.
     private ServiceConnection mConnection = new ServiceConnection() {
 
         public void onServiceConnected(ComponentName className, IBinder binder) {
-            OgnService.LocalBinder b = (OgnService.LocalBinder) binder;
-            ognService = b.getService();
-
-            updateKnownAircrafts(ognService.aircraftMap);
-            updateKnownReceivers(ognService.receiverMap);
+            OgnService.LocalBinder localBinder = (OgnService.LocalBinder) binder;
+            ognService = localBinder.getService();
+            updateKnownAircrafts(ognService.aircraftBundleMap);
+            updateKnownReceivers(ognService.receiverBundleMap);
         }
 
         public void onServiceDisconnected(ComponentName className) {
             ognService = null;
         }
     };
+
 
 
     private void updateKnownAircrafts(final Map<String, AircraftBundle> aircraftMap) {
@@ -85,11 +93,15 @@ public class MapsActivity extends FragmentActivity {
         }
     }
 
+    boolean mapUpdating = false;
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main_menu, menu);
         return true;
     }
+
+    final int OPTION_SETTINGS = 2;
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -99,13 +111,7 @@ public class MapsActivity extends FragmentActivity {
         switch (id) {
             case R.id.action_settings:
                 Intent i = new Intent(this, PrefsActivity.class);
-                startActivity(i);
-
-                Boolean showreceivers = sharedPreferences.getBoolean(getString(R.string.key_showreceivers_preference), true);
-                for (Marker m : receiverMarkerMap.values()) {
-                    m.setVisible(showreceivers);
-                }
-
+                startActivityForResult(i, OPTION_SETTINGS);
                 break;
             case R.id.action_manageids:
                 Intent i2 = new Intent(this, ManageIDsActivity.class);
@@ -126,12 +132,15 @@ public class MapsActivity extends FragmentActivity {
                         mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
                     }
                 };
-
-                Location location = locManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-                if (location != null) {
-                    locationListener.onLocationChanged(location);
-                } else {
-                    //locManager.requestSingleUpdate(LocationManager.NETWORK_PROVIDER, null);
+                try {
+                    Location location = locManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+                    if (location != null) {
+                        locationListener.onLocationChanged(location);
+                    } else {
+                        //locManager.requestSingleUpdate(LocationManager.NETWORK_PROVIDER, null);
+                    }
+                } catch (SecurityException se) {
+                    // accessing location is forbidden
                 }
 
                 break;
@@ -146,10 +155,10 @@ public class MapsActivity extends FragmentActivity {
 
                 AlertDialog alertDialog = new AlertDialog.Builder(MapsActivity.this).create();
                 alertDialog.setTitle("About");
-                alertDialog.setMessage("OGN Viewer " + versionName);
+                alertDialog.setMessage("OGN Viewer " + versionName + "\nby\nKonstantin Gründger\nDominik Prikril");
                 alertDialog.setButton(DialogInterface.BUTTON_POSITIVE, "OK", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
-                        //asdf;
+                        // User pressed OK button.
                     }
                 });
                 alertDialog.show();
@@ -157,6 +166,8 @@ public class MapsActivity extends FragmentActivity {
             case R.id.action_exit:
                 stopService(new Intent(getBaseContext(), OgnService.class));
                 LocalBroadcastManager.getInstance(this).unregisterReceiver(aircraftReceiver);
+                LocalBroadcastManager.getInstance(this).unregisterReceiver(receiverReceiver);
+                LocalBroadcastManager.getInstance(this).unregisterReceiver(actionReceiver);
                 finish();
         }
 
@@ -164,57 +175,96 @@ public class MapsActivity extends FragmentActivity {
     }
 
     @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data)
+    {
+        super.onActivityResult(requestCode, resultCode, data);
+        if(requestCode == OPTION_SETTINGS)
+        {
+            //aprs filter
+            //String message = data.getStringExtra("MESSAGE"); //leave this for future usage
+            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+            String aprsFilter = sharedPreferences.getString(getString(R.string.key_aprsfilter_preference), "");
+            updateAprsFilterRange(aprsFilter);
+
+            //map type
+            changeMapType();
+
+            //receivers
+            Boolean showreceivers = sharedPreferences.getBoolean(getString(R.string.key_showreceivers_preference), true);
+            for (Marker m : receiverMarkerMap.values()) { //TODO: profile this code, maybe slow!
+                m.setVisible(showreceivers);
+            }
+        }
+    }
+
+    private void changeMapType() {
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        String mapType = sharedPreferences.getString(getString(R.string.key_map_type_preference), getString(R.string.terrain));
+        if (mMap != null) {
+            if (mapType.equals(getString(R.string.hybrid))) {
+                mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
+            } else if (mapType.equals(getString(R.string.satellite))) {
+                mMap.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
+            } else {
+                mMap.setMapType(GoogleMap.MAP_TYPE_TERRAIN);
+            }
+        }
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.fragment_maps);
-        checkSetUpMap();
+        //TODO: why is this necessary in onCreate? dominik: 2017-11-12
+        checkSetUpMap();//already in onResume(), but seems to be not enough
+
 
         aircraftReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
                 // AircraftBeacon
                 String receiverName = intent.getStringExtra("receiverName");
-                AddressType addressType = AddressType.forValue(intent.getIntExtra("addressType", 0));
+                //AddressType addressType = AddressType.forValue(intent.getIntExtra("addressType", 0));
                 String address = intent.getStringExtra("address");
                 AircraftType aircraftType = AircraftType.forValue(intent.getIntExtra("aircraftType", 0));
-                boolean stealth = intent.getBooleanExtra("stealth", false);
+                //boolean stealth = intent.getBooleanExtra("stealth", false);
                 float climbRate = intent.getFloatExtra("climbRate", 0);
-                float turnRate = intent.getFloatExtra("turnRate", 0);
-                float signalStrength = intent.getFloatExtra("signalStrength", 0);
-                float frequencyOffset = intent.getFloatExtra("frequencyOffset", 0);
-                String gpsStatus = intent.getStringExtra("gpsStatus");
-                int errorCount = intent.getIntExtra("errorCount", 0);
+                //float turnRate = intent.getFloatExtra("turnRate", 0);
+                //float signalStrength = intent.getFloatExtra("signalStrength", 0);
+                //float frequencyOffset = intent.getFloatExtra("frequencyOffset", 0);
+                //String gpsStatus = intent.getStringExtra("gpsStatus");
+                //int errorCount = intent.getIntExtra("errorCount", 0);
                 //String[] getHeardAircraftIds();
 
                 // OgnBeacon
-                String id = intent.getStringExtra("id");
-                long timestamp = intent.getLongExtra("timestamp", 0);
+                //String id = intent.getStringExtra("id");
+                //long timestamp = intent.getLongExtra("timestamp", 0);
                 double lat = intent.getDoubleExtra("lat", 0);
                 double lon = intent.getDoubleExtra("lon", 0);
                 float alt = intent.getFloatExtra("alt", 0);
                 int track = intent.getIntExtra("track", 0);
                 float groundSpeed = intent.getFloatExtra("groundSpeed", 0);
-                String rawPacket = intent.getStringExtra("rawPacket");
+                //String rawPacket = intent.getStringExtra("rawPacket");
 
                 // AircraftDescriptor
                 boolean known = intent.getBooleanExtra("known", false);
                 String regNumber = intent.getStringExtra("regNumber");
                 String CN = intent.getStringExtra("CN");
-                String owner = intent.getStringExtra("owner");
-                String homeBase = intent.getStringExtra("homeBase");
+                //String owner = intent.getStringExtra("owner");
+                //String homeBase = intent.getStringExtra("homeBase");
                 String model = intent.getStringExtra("model");
-                String freq = intent.getStringExtra("freq");
+                //String freq = intent.getStringExtra("freq");
                 boolean tracked = intent.getBooleanExtra("tracked", false);
                 boolean identified = intent.getBooleanExtra("identified", false);
 
                 boolean isOgnPrivate = known && (!tracked || !identified);
                 if (!isOgnPrivate) {
-                    updateAircraftBeaconMarker(address, aircraftType, climbRate, lat, lon, alt, (int) groundSpeed, regNumber, CN, model);
+                    updateAircraftBeaconMarkerOnMap(address, aircraftType, climbRate, lat, lon, alt,
+                            (int) groundSpeed, regNumber, CN, model, receiverName, track);
                 }
             }
         };
-
         LocalBroadcastManager.getInstance(this).registerReceiver((aircraftReceiver), new IntentFilter("AIRCRAFT-BEACON"));
 
         receiverReceiver = new BroadcastReceiver() {
@@ -222,13 +272,13 @@ public class MapsActivity extends FragmentActivity {
             public void onReceive(Context context, Intent intent) {
                 // ReceiverBeacon
                 float recInputNoise = intent.getFloatExtra("recInputNoise", 0);
-                String version = intent.getStringExtra("version");
-                String platform = intent.getStringExtra("platform");
-                int numericVersion = intent.getIntExtra("numericVersion", 0);
+                //String version = intent.getStringExtra("version");
+                //String platform = intent.getStringExtra("platform");
+                //int numericVersion = intent.getIntExtra("numericVersion", 0);
 
                 // OgnBeacon
                 String id = intent.getStringExtra("id");
-                long timestamp = intent.getLongExtra("timestamp", 0);
+                //long timestamp = intent.getLongExtra("timestamp", 0);
                 double lat = intent.getDoubleExtra("lat", 0);
                 double lon = intent.getDoubleExtra("lon", 0);
                 float alt = intent.getFloatExtra("alt", 0);
@@ -236,15 +286,32 @@ public class MapsActivity extends FragmentActivity {
                 // Computed values
                 int aircraftCounter = intent.getIntExtra("aircraftCounter", 0);
                 int maxAircraftCounter = intent.getIntExtra("maxAircraftCounter", 0);
+
                 int beaconCounter = intent.getIntExtra("beaconCounter", 0);
                 int maxBeaconCounter = intent.getIntExtra("maxBeaconCounter", 0);
-
-                if (lat != 0 && lon != 0)
-                    updateReceiverBeaconMarker(id, lat, lon, alt, recInputNoise, aircraftCounter, maxAircraftCounter, beaconCounter, maxBeaconCounter);
+                if (lat != 0 && lon != 0) {
+                    updateReceiverBeaconMarkerOnMap(id, lat, lon, alt, recInputNoise,
+                            aircraftCounter, maxAircraftCounter, beaconCounter, maxBeaconCounter);
+                }
             }
         };
-
         LocalBroadcastManager.getInstance(this).registerReceiver((receiverReceiver), new IntentFilter("RECEIVER-BEACON"));
+
+        //action receiver for receiving commands from ognService
+        actionReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                String action = intent.getStringExtra("AIRCRAFT_ACTION");
+                if (action.equals("REMOVE_AIRCRAFT")) {
+                    String address = intent.getStringExtra("address");
+                    if (address != null) {
+                        removeAircraftFromMap(address);
+                    }
+                }
+            }
+        };
+        LocalBroadcastManager.getInstance(this).registerReceiver((actionReceiver), new IntentFilter("AIRCRAFT_ACTION"));
+
 
         if (savedInstanceState == null) {
             SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
@@ -252,9 +319,13 @@ public class MapsActivity extends FragmentActivity {
             if (aprsFilter.equals("")) {
                 LocationManager locManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
                 if (locManager != null) {
-                    Location location = locManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-                    if (location != null) {
-                        aprsFilter = AprsFilterManager.latLngToAprsFilter(location.getLatitude(), location.getLongitude());
+                    try {
+                        Location location = locManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+                        if (location != null) {
+                            aprsFilter = AprsFilterManager.latLngToAprsFilter(location.getLatitude(), location.getLongitude());
+                        }
+                    } catch (SecurityException se) {
+                        // accessing location is forbidden
                     }
                 }
                 editEmptyAprsFilter(aprsFilter);
@@ -267,13 +338,30 @@ public class MapsActivity extends FragmentActivity {
 
     private void updateReceiverBeaconMarker(ReceiverBundle bundle) {
         ReceiverBeacon beacon = bundle.receiverBeacon;
-        updateReceiverBeaconMarker(beacon.getId(), beacon.getLat(), beacon.getLon(), beacon.getAlt(), beacon.getRecInputNoise(), bundle.aircrafts.size(), ReceiverBundle.maxAircraftCounter, bundle.beaconCount, ReceiverBundle.maxBeaconCounter);
+        String receiverName = beacon.getId();
+        double lat = beacon.getLat();
+        double lon = beacon.getLon();
+        float alt = beacon.getAlt();
+        float recInputNoise = beacon.getRecInputNoise();
+        int aircraftCounter = bundle.aircrafts.size();
+        int beaconCounter = bundle.beaconCount;
+
+        updateReceiverBeaconMarkerOnMap(receiverName, lat, lon, alt, recInputNoise,
+                aircraftCounter, ReceiverBundle.maxAircraftCounter,
+                beaconCounter, ReceiverBundle.maxBeaconCounter);
+
     }
 
-    private void updateReceiverBeaconMarker(String receiverName, double lat, double lon, float alt, float recInputNoise, int aircraftCounter, int maxAircraftCounter, int beaconCounter, int maxBeaconCounter) {
+    private void updateReceiverBeaconMarkerOnMap(String receiverName, double lat, double lon,
+                                                 float altitude, float recInputNoise,
+                                                 int aircraftCounter, int maxAircraftCounter,
+                                                 int beaconCounter, int maxBeaconCounter ) {
         Marker m;
         boolean infoWindowShown = false;
         if (!receiverMarkerMap.containsKey(receiverName)) {
+            if (mMap == null) {
+                return;
+            }
             m = mMap.addMarker(new MarkerOptions().position(new LatLng(lat, lon)));
             receiverMarkerMap.put(receiverName, m);
         } else {
@@ -282,17 +370,24 @@ public class MapsActivity extends FragmentActivity {
             m.setPosition(new LatLng(lat, lon));
         }
 
+        Log.d(TAG, "updating marker for receiver: " + receiverName + " " + new Date().getTime());
+
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         Boolean showReceivers = sharedPreferences.getBoolean(getString(R.string.key_showreceivers_preference), false);
         Boolean isActive = (sharedPreferences.getBoolean(getString(R.string.key_shownotactive_preference), true) || aircraftCounter > 0 || beaconCounter > 0);
 
         m.setVisible(showReceivers && isActive);
 
-        String title = receiverName + " (" + alt + "m)";
+        String title = receiverName + " (" + altitude + "m)";
         String content = "Aircrafts: " + aircraftCounter + ", Beacons: " + beaconCounter;
 
         m.setTitle(title);
         m.setSnippet(content);
+
+        //attempt to speedup app
+        if (!showReceivers) {
+            return;
+        }
 
         float hue;
         String colorisation = sharedPreferences.getString(getString(R.string.key_receiver_colorisation_preference), getString(R.string.aircraft_count));
@@ -301,7 +396,7 @@ public class MapsActivity extends FragmentActivity {
         } else if (colorisation.equals(getString(R.string.beacon_count))) {
             hue = Utils.getHue(beaconCounter, 0, maxBeaconCounter, 0, 270);
         } else {
-            hue = Utils.getHue(alt, 0, 3000, 0, 270);
+            hue = Utils.getHue(altitude, 0, 3000, 0, 270);
         }
 
         //m.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE));
@@ -314,7 +409,7 @@ public class MapsActivity extends FragmentActivity {
         iconGenerator.setContentPadding(delta / 2, 0, delta / 2, 0);
         iconGenerator.setColor(Color.HSVToColor(new float[]{hue, (float)255, (float)255}));
         iconGenerator.setTextAppearance(R.style.TextColorBlack);
-        icon = iconGenerator.makeIcon(receiverName);
+        icon = iconGenerator.makeIcon(receiverName); //CAUTION: sometimes causes OutOfMemoryError
 
         m.setIcon(BitmapDescriptorFactory.fromBitmap(icon));
 
@@ -322,6 +417,7 @@ public class MapsActivity extends FragmentActivity {
         if (infoWindowShown) {
             m.showInfoWindow();
         }
+        Log.d(TAG, "updated marker for receiver: " + receiverName + " " + new Date().getTime());
     }
 
     private void updateAircraftBeaconMarker(AircraftBundle bundle) {
@@ -330,23 +426,65 @@ public class MapsActivity extends FragmentActivity {
 
         boolean isOgnPrivate = aircraftDescriptor.isKnown() && (!aircraftDescriptor.isTracked() || !aircraftDescriptor.isIdentified());
         if (!isOgnPrivate) {
-            updateAircraftBeaconMarker(aircraftBeacon.getAddress(), aircraftBeacon.getAircraftType(), aircraftBeacon.getClimbRate(), aircraftBeacon.getLat(), aircraftBeacon.getLon(), aircraftBeacon.getAlt(), aircraftBeacon.getGroundSpeed(), aircraftDescriptor.getRegNumber(), aircraftDescriptor.getCN(), aircraftDescriptor.getModel());
+            updateAircraftBeaconMarkerOnMap(aircraftBeacon.getAddress(), aircraftBeacon.getAircraftType(),
+                    aircraftBeacon.getClimbRate(), aircraftBeacon.getLat(), aircraftBeacon.getLon(),
+                    aircraftBeacon.getAlt(), aircraftBeacon.getGroundSpeed(), aircraftDescriptor.getRegNumber(),
+                    aircraftDescriptor.getCN(), aircraftDescriptor.getModel(), aircraftBeacon.getReceiverName(),
+                    aircraftBeacon.getTrack());
+        }
+
+    }
+
+
+
+
+    private void pauseUpdatingMap() {
+        if (ognService != null) {
+            ognService.pauseUpdatingMap();
         }
     }
 
-    private void updateAircraftBeaconMarker(String address, AircraftType aircraftType, float climbRate, double lat, double lon, float alt, float groundSpeed, String regNumber, String CN, String model) {
+    private void resumeUpdatingMap() {
+        if (ognService != null) {
+            ognService.resumeUpdatingMap(mMap.getProjection().getVisibleRegion().latLngBounds);
+        }
+    }
+
+    private void updateAircraftBeaconMarkerOnMap(String address, AircraftType aircraftType, float climbRate,
+                                            double lat, double lon, float alt, float groundSpeed,
+                                            String regNumber, String CN, String model,
+                                            String receiverName, int track) {
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+
+        if (ognService == null) {
+            return; //why does this happen? (sometimes during debug)
+        }
+        ognService.mapUpdatingStatus(true);
         Marker m;
         boolean infoWindowShown = false;
+
+        Log.d(TAG, "updating marker for address: " + address + " " + new Date().getTime());
+
         if (!aircraftMarkerMap.containsKey(address)) {
-            m = mMap.addMarker(new MarkerOptions().position(new LatLng(lat, lon)));
+            if (mMap == null) {
+                return; //happens when orientation changes
+            } else {
+                m = mMap.addMarker(new MarkerOptions().position(new LatLng(lat, lon)));
+            }
             aircraftMarkerMap.put(address, m);
         } else {
             m = aircraftMarkerMap.get(address);
+
             infoWindowShown = m.isInfoWindowShown();
             m.setPosition(new LatLng(lat, lon));
         }
+        Boolean rotateAircraft = sharedPreferences.getBoolean(getString(R.string.key_rotate_aircraft_preference), false);
+        if (rotateAircraft) {
+            m.setRotation(track + 180); //with 180 the pin shows to north on 0 degree from track
+        } else {
+            m.setRotation(0); //default, to reset alredy rotated markers
+        }
 
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         String colorisation = sharedPreferences.getString(getString(R.string.key_aircraft_colorisation_preference), getString(R.string.altitude));
         Boolean showaircrafts = sharedPreferences.getBoolean(getString(R.string.key_showaircrafts_preference), true);
         Boolean shownonmoving = sharedPreferences.getBoolean(getString(R.string.key_shownonmoving_preference), true);
@@ -354,6 +492,7 @@ public class MapsActivity extends FragmentActivity {
 
         if (!showaircrafts || !shownonmoving && groundSpeed < 5) {
             m.setVisible(false);
+            ognService.mapUpdatingStatus(false);
             return;
         } else {
             m.setVisible(true);
@@ -370,7 +509,8 @@ public class MapsActivity extends FragmentActivity {
         } else {
             title = address;
         }
-        String content = String.format(Locale.US,"alt:%d gs:%d, vs:%.1f",  (int) alt, (int) groundSpeed, climbRate);
+        String content = String.format(Locale.US,"alt:%d gs:%d, vs:%.1f, rec:%s",
+                (int) alt, (int) groundSpeed, climbRate, receiverName);
 
         m.setTitle(title);
         m.setSnippet(content);
@@ -439,7 +579,12 @@ public class MapsActivity extends FragmentActivity {
 
         // make icon
         if (!showregistration || ((regNumber == null || regNumber.isEmpty()) && (CN == null || CN.isEmpty()))) {
-            m.setIcon(BitmapDescriptorFactory.defaultMarker(hue));
+            if (m == null) { ///why is this sometimes true?
+                ognService.mapUpdatingStatus(false);
+                return;
+            }
+            m.setIcon(BitmapDescriptorFactory.defaultMarker(hue)); //CAUTION: very slow process!
+            //m.setIcon(BitmapDescriptorFactory.defaultMarker()); //TODO: fix this workaround
         } else {
             if (CN == null || CN.isEmpty()) {
                 if (regNumber.length() > 1) {
@@ -462,6 +607,10 @@ public class MapsActivity extends FragmentActivity {
             iconGenerator.setTextAppearance(R.style.TextColorBlack);
             icon = iconGenerator.makeIcon(title);
 
+            if (m == null) { //why is this sometimes true?
+                ognService.mapUpdatingStatus(false);
+                return;
+            }
             m.setIcon(BitmapDescriptorFactory.fromBitmap(icon));
         }
 
@@ -470,40 +619,59 @@ public class MapsActivity extends FragmentActivity {
         if (infoWindowShown) {
             m.showInfoWindow();
         }
+        ognService.mapUpdatingStatus(false);
+        Log.d(TAG, "updated marker for address: " + address + " " + new Date().getTime());
+    }
+
+    private void removeAircraftFromMap(String address) {
+        if (aircraftMarkerMap.containsKey(address)) {
+            Marker m;
+            m = aircraftMarkerMap.get(address);
+            if (m == null) {
+                //alredy removed? continue
+                return;
+            }
+            m.remove(); //remove marker from mMap
+            aircraftMarkerMap.remove(address);
+        }
     }
 
     @Override
     protected void onPause() {
         super.onPause();
         unbindService(mConnection);
+        pauseUpdatingMap();
 
         // Save current lat, lon, zoom
-        float lat = (float) mMap.getCameraPosition().target.latitude;
-        float lon = (float) mMap.getCameraPosition().target.longitude;
-        float zoom = mMap.getCameraPosition().zoom;
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-        sharedPreferences.edit().putFloat(getString(R.string.key_latitude_preference), lat).apply();
-        sharedPreferences.edit().putFloat(getString(R.string.key_longitude_preference), lon).apply();
-        sharedPreferences.edit().putFloat(getString(R.string.key_zoom_preference), zoom).apply();
+        if (mMap != null) {
+            float lat = (float) mMap.getCameraPosition().target.latitude;
+            float lon = (float) mMap.getCameraPosition().target.longitude;
+            float zoom = mMap.getCameraPosition().zoom;
+            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+            sharedPreferences.edit().putFloat(getString(R.string.key_latitude_preference), lat).apply();
+            sharedPreferences.edit().putFloat(getString(R.string.key_longitude_preference), lon).apply();
+            sharedPreferences.edit().putFloat(getString(R.string.key_zoom_preference), zoom).apply();
+            //speedup for onResume? oh yes :)
+            mMap.clear();
+        }
+        //additional speedup for onResume
+        rangeCircle = null;
+        aircraftMarkerMap.clear();
+        receiverMarkerMap.clear();
+
     }
 
     @Override
     protected void onResume() {
+        //TODO: check what is so slow (sometimes a few seconds)
         super.onResume();
         bindService(new Intent(this, OgnService.class), mConnection, Context.BIND_AUTO_CREATE);
 
         checkSetUpMap();
-
-        // Restore lat, lon, zoom
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-        float lat = sharedPreferences.getFloat(getString(R.string.key_latitude_preference), 0.0f);
-        float lon = sharedPreferences.getFloat(getString(R.string.key_longitude_preference), 0.0f);
-        float zoom = sharedPreferences.getFloat(getString(R.string.key_zoom_preference), 2.0f);
-        CameraPosition cameraPosition = new CameraPosition.Builder()
-                .target(new LatLng(lat, lon))
-                .zoom(zoom)
-                .build();
-        mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+        String aprsFilter = sharedPreferences.getString(getString(R.string.key_aprsfilter_preference), "");
+        updateAprsFilterRange(aprsFilter); //necessary for the circle, because it was ereased in onPause
+        resumeUpdatingMap();
     }
 
     @Override
@@ -513,20 +681,13 @@ public class MapsActivity extends FragmentActivity {
 
     private void checkSetUpMap() {
         if (mMap == null) {
-            mMap = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map)).getMap();
-
-            if (mMap != null) {
-                setUpMap();
-            }
+            SupportMapFragment suppMapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
+            suppMapFragment.getMapAsync(this);
         }
-
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-        String aprsFilter = sharedPreferences.getString(getString(R.string.key_aprsfilter_preference), "");
-        updateAprsFilterRange(aprsFilter);
     }
 
     private void setUpMap() {
-        mMap.setMapType(GoogleMap.MAP_TYPE_TERRAIN);
+        changeMapType();
         mMap.getUiSettings().setMapToolbarEnabled(false);
 
         mMap.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
@@ -613,7 +774,11 @@ public class MapsActivity extends FragmentActivity {
 
     private void updateAprsFilterRange(String aprsFilter) {
         if (rangeCircle == null) {
-            rangeCircle = mMap.addCircle(new CircleOptions().center(new LatLng(0, 0)).radius(1).strokeColor(Color.RED));
+            if (mMap == null) {
+                return;
+            } else {
+                rangeCircle = mMap.addCircle(new CircleOptions().center(new LatLng(0, 0)).radius(1).strokeColor(Color.RED));
+            }
         }
         rangeCircle.setVisible(false);
 
@@ -623,5 +788,39 @@ public class MapsActivity extends FragmentActivity {
             rangeCircle.setRadius(circle.radius * 1000);
             rangeCircle.setVisible(true);
         }
+    }
+
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        if (mMap != null) return; //use first loaded map only
+        mMap = googleMap;
+        mMap.getUiSettings().setRotateGesturesEnabled(false); //do not allow rotating the map
+        mMap.setOnCameraIdleListener(this);
+        mMap.setOnCameraMoveStartedListener(this);
+        setUpMap();
+
+        // Restore lat, lon, zoom
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        float lat = sharedPreferences.getFloat(getString(R.string.key_latitude_preference), 0.0f);
+        float lon = sharedPreferences.getFloat(getString(R.string.key_longitude_preference), 0.0f);
+        float zoom = sharedPreferences.getFloat(getString(R.string.key_zoom_preference), 2.0f);
+        CameraPosition cameraPosition = new CameraPosition.Builder()
+                .target(new LatLng(lat, lon))
+                .zoom(zoom)
+                .build();
+        mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+
+        String aprsFilter = sharedPreferences.getString(getString(R.string.key_aprsfilter_preference), "");
+        updateAprsFilterRange(aprsFilter);
+    }
+
+    @Override
+    public void onCameraMoveStarted(int i) {
+        pauseUpdatingMap();
+    }
+
+    @Override
+    public void onCameraIdle() {
+        resumeUpdatingMap();
     }
 }
