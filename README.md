@@ -5,7 +5,9 @@ Android app that visualizes the aircraft traffic from [The Open Glider Network p
 
 This is a fork of meisterschuelers ogn-viewer-android app. (https://github.com/Meisterschueler/ogn-viewer-android)
 
-Current version: 1.3.1d
+Current version: 1.3.2
+
+See [release notes](release-notes.md) for details.
 
 ## Dependencies
 The app uses two repositories from glidernet:
