@@ -76,13 +76,19 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
     public OgnService() {
         tcpServer = new TcpServer();
         tcpServer.startServer();
+        //TODO: refactor this and use fused location API 2017-11-15
         Runnable locationUpdate = new Runnable() {
             @Override
             public void run() {
                 while(true) {
                     LocationManager locManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
                     try {
-                        currentLocation = locManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                        if (locManager != null) {
+                            currentLocation = locManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                        } else {
+                            //not allowed to obtain location
+                        }
+
                         if (currentLocation != null) {
                             tcpServer.updatePosition(currentLocation);
                         }
