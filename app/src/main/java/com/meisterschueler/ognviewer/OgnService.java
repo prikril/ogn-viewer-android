@@ -15,11 +15,10 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.meisterschueler.ognviewer.common.FlarmMessage;
-import com.meisterschueler.ognviewer.common.ReceiverBundle;
-
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
+import com.meisterschueler.ognviewer.common.FlarmMessage;
+import com.meisterschueler.ognviewer.common.ReceiverBundle;
 
 import org.ogn.client.AircraftBeaconListener;
 import org.ogn.client.OgnClient;
@@ -81,20 +80,18 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
             @Override
             public void run() {
                 while(true) {
-                    LocationManager locManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
                     try {
-                        if (locManager != null) {
-                            currentLocation = locManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-                        } else {
-                            //not allowed to obtain location
-                        }
-
+                        LocationManager locManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+                        currentLocation = locManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
                         if (currentLocation != null) {
                             tcpServer.updatePosition(currentLocation);
                         }
                     } catch (SecurityException se) {
                         // accessing location is forbidden
+                    } catch (NullPointerException npe) {
+                        // context not available
                     }
+
                     try {
                         Thread.sleep(1000);
                     } catch (InterruptedException e) {
