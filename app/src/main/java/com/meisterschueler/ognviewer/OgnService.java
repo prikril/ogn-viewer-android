@@ -12,12 +12,12 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
-import android.util.Log;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.meisterschueler.ognviewer.common.FlarmMessage;
+import com.meisterschueler.ognviewer.common.ReceiverBeaconImplReplacement;
 import com.meisterschueler.ognviewer.common.ReceiverBundle;
 
 import org.ogn.client.AircraftBeaconListener;
@@ -43,6 +43,7 @@ import java.util.concurrent.TimeUnit;
 import co.uk.rushorm.android.AndroidInitializeConfig;
 import co.uk.rushorm.core.Rush;
 import co.uk.rushorm.core.RushCore;
+import timber.log.Timber;
 
 public class OgnService extends Service implements AircraftBeaconListener, ReceiverBeaconListener {
 
@@ -50,8 +51,8 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
 
     TcpServer tcpServer;
 
-    OgnClient ognClient;
-    boolean connected = false;
+    private OgnClient ognClient; //initialized in onStartCommand
+    private boolean ognConnected = false; //is true, when service was started (onStartCommand)
     LocalBroadcastManager localBroadcastManager;
     IBinder binder = new LocalBinder();
     //Map<String, AircraftBundle> aircraftMap = new ConcurrentHashMap<>(); //von upstream 2017-11-02
@@ -60,13 +61,22 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
     int maxAircraftCounter = 0;
     int maxBeaconCounter = 0;
     Map<String, ReceiverBundle> receiverBundleMap = new ConcurrentHashMap<>();
-    Map<String, AircraftBundle> aircraftBundleMap = new ConcurrentHashMap<String, AircraftBundle>();
+    Map<String, AircraftBundle> aircraftBundleMap = new ConcurrentHashMap<>();
 
 
     LocationManager locManager;
     Location currentLocation = null;
-    ScheduledExecutorService scheduledTaskExecutor;
-    boolean refreshingActive = true;
+    private ScheduledExecutorService scheduledTaskExecutor;
+    private boolean refreshingActive = true; // if true, markers on map should be updated
+    private boolean mapCurrentlyUpdating = false; // if true, the map is currently updating (new updates should wait)
+    private int aircraftTimeoutInSec = 300; //TODO: extract default value;
+
+    public void setMapUpdatingStatus(boolean updating) {
+        mapCurrentlyUpdating = updating;
+    }
+    public void setAircraftTimeout(int timoutInSec) {
+        aircraftTimeoutInSec = timoutInSec;
+    }
 
     public interface UpdateListener {
         public void updateAircraftBundle(AircraftBundle bundle);
@@ -120,16 +130,19 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
             maxAircraftCounter = Math.max(maxAircraftCounter, receiverBundle.aircrafts.size());
             maxBeaconCounter = Math.max(maxBeaconCounter, receiverBundle.beaconCount);
         }
-        if (!mapCurrentlyUpdating) {
+        if (refreshingActive) {
             sendAircraftToMap(bundle);
         }
 
+        tcpServer.addFlarmMessage(new FlarmMessage(aircraftBeacon));
+
         //for debugging
         Calendar c = Calendar.getInstance();
+        int hours = c.get(Calendar.HOUR_OF_DAY);
         int seconds = c.get(Calendar.SECOND);
         int minutes = c.get(Calendar.MINUTE);
-        Log.d(TAG,aircraftBundleMap.size() + " AircraftBeacons " + minutes + ":" + seconds);
-        Log.d(TAG,"Last aircraft: " + aircraftBeacon.getAddress());
+        Timber.d(aircraftBundleMap.size() + " AircraftBeacons " + hours + ":" + minutes + ":" + seconds);
+        Timber.d("Last aircraft: " + aircraftBeacon.getAddress());
     }
 
     private void sendAircraftToMap(AircraftBundle aircraftBundle) {
@@ -174,18 +187,25 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
             intent.putExtra("identified", aircraftDescriptor.isIdentified());
         }
 
-        if (refreshingActive) {
+        if (!mapCurrentlyUpdating) { //check if something is updating the map currently
             localBroadcastManager.sendBroadcast(intent);
+        } else {
+            Timber.d("Lost beacon for aircraft: " + aircraftBeacon.getAddress() + " " + new Date().getTime());
         }
-
-        tcpServer.addFlarmMessage(new FlarmMessage(aircraftBeacon));
     }
 
     @Override
     public void onUpdate(ReceiverBeacon receiverBeacon) {
-        ReceiverBundle bundle = receiverBundleMap.get(receiverBeacon.getId());
-        if (bundle == null) {
-            bundle = new ReceiverBundle(receiverBeacon);
+        //CAUTION: onUpdate(ReceiverBeacon) is called two times
+        //the first time e.g. cpuLoad, ram, platform are 0 or empty
+        //the second time lat, long and alt are 0
+        ReceiverBundle existingBundle = receiverBundleMap.get(receiverBeacon.getId());
+        ReceiverBundle bundle = new ReceiverBundle(receiverBeacon);
+        if (existingBundle != null) {
+            bundle.aircrafts = existingBundle.aircrafts;
+            bundle.beaconCount = existingBundle.beaconCount;
+            ReceiverBeaconImplReplacement beacon = new ReceiverBeaconImplReplacement(existingBundle.receiverBeacon);
+            bundle.receiverBeacon = beacon.update(receiverBeacon);
         }
 
         receiverBundleMap.put(receiverBeacon.getId(), bundle);
@@ -210,7 +230,7 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
 
         // OgnBeacon
         intent.putExtra("id", receiverBeacon.getId());
-        intent.putExtra("timestamp", receiverBeacon.getTimestamp());
+        intent.putExtra("timestamp", receiverBeacon.getTimestamp()); //e.g. 1517918400000L
         intent.putExtra("lat", receiverBeacon.getLat());
         intent.putExtra("lon", receiverBeacon.getLon());
         intent.putExtra("alt", receiverBeacon.getAlt());
@@ -219,23 +239,31 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
         //intent.putExtra("rawPacket", receiverBeacon.getRawPacket());
 
         // Computed Values
+        // does this two lines make any sense here? 2018-02-06
+        // It's already set in onUpdate(Aircraft...)
         maxAircraftCounter = Math.max(maxAircraftCounter, bundle.aircrafts.size());
         maxBeaconCounter = Math.max(maxBeaconCounter, bundle.beaconCount);
 
+        //maybe move to onUpdate(Aircraft...)? 2018-02-11
+        ReceiverBundle.maxAircraftCounter = maxAircraftCounter;
+        ReceiverBundle.maxBeaconCounter = maxBeaconCounter;
+
         intent.putExtra("aircraftCounter", bundle.aircrafts.size());
-        intent.putExtra("maxAircraftCounter", maxBeaconCounter);
+        intent.putExtra("maxAircraftCounter", maxAircraftCounter);
         intent.putExtra("beaconCounter", bundle.beaconCount);
         intent.putExtra("maxBeaconCounter", maxBeaconCounter);
 
         if (refreshingActive) {
             localBroadcastManager.sendBroadcast(intent);
         }
+
         //for debugging
         Calendar c = Calendar.getInstance();
+        int hours = c.get(Calendar.HOUR_OF_DAY);
         int seconds = c.get(Calendar.SECOND);
         int minutes = c.get(Calendar.MINUTE);
-        Log.d(TAG, receiverBundleMap.size() + " ReceiverBeacons " + minutes + ":" + seconds);
-        Log.d(TAG,"Last receiver: " + receiverBeacon.getId());
+        Timber.d(receiverBundleMap.size() + " ReceiverBeacons " + hours + ":" + minutes + ":" + seconds);
+        Timber.d("Last receiver: " + receiverBeacon.getId());
     }
 
     @Override
@@ -250,10 +278,6 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
         RushCore.initialize(config);
 
         localBroadcastManager = LocalBroadcastManager.getInstance(this);
-
-        ognClient = AircraftDescriptorProviderHelper.getOgnClient();
-        ognClient.subscribeToAircraftBeacons(this);
-        ognClient.subscribeToReceiverBeacons(this);
 
         String versionName = "?";
         try {
@@ -278,18 +302,27 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
     public int onStartCommand(Intent intent, int flags, int startId) {
         String aprs_filter = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getString(getString(R.string.key_aprsfilter_preference), "");
 
-        if (connected) {
+        if (ognConnected) {
             ognClient.disconnect();
+        } else {
+            ognClient = AircraftDescriptorProviderHelper.getOgnClient();
+            ognClient.subscribeToAircraftBeacons(this);
+            ognClient.subscribeToReceiverBeacons(this);
         }
 
         if (aprs_filter.isEmpty()) {
             ognClient.connect();
-            connected = true;
+            ognConnected = true;
             Toast.makeText(this, "Connected to OGN without filter", Toast.LENGTH_LONG).show();
         } else {
             ognClient.connect(aprs_filter);
-            connected = true;
+            ognConnected = true;
             Toast.makeText(this, "Connected to OGN. Filter: " + aprs_filter, Toast.LENGTH_LONG).show();
+        }
+
+        if (refreshingActive) {
+            //this happens only when applyModifiedFilter in MapsActivity is called
+            resumeUpdatingMap(this.latLngBounds);
         }
 
         return START_STICKY;
@@ -304,15 +337,18 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
     public void onDestroy() {
         super.onDestroy();
 
-        ognClient.disconnect();
-        connected = false;
+        if (ognConnected) {
+            ognClient.disconnect();
+            ognConnected = false;
+        }
 
         Toast.makeText(this, "Disconnected from OGN", Toast.LENGTH_LONG).show();
 
         tcpServer.stopServer();
+        pauseUpdatingMap();
     }
 
-    //do not delete! WIP 2017-11-05
+    //do not delete! WIP from Dominik 2017-11-05
     private void updateAircraftBeaconMarkerInDB(String address, AircraftType aircraftType, float climbRate,
                                                 double lat, double lon, float alt, float groundSpeed,
                                                 String regNumber, String cn, String model, boolean isOgnPrivate,
@@ -343,6 +379,11 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
         this.latLngBounds = latLngBounds;
         refreshingActive = true;
 
+        if(!ognConnected) {
+            //this happens when no filter is set and onStartCommand was not called
+            return;
+        }
+
         final long initialDelayInSeconds = 2L;
         final long delayInSeconds = 2L;
         scheduledTaskExecutor = new ScheduledThreadPoolExecutor(1);
@@ -351,10 +392,11 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
             public void run() {
                 //TODO: add try catches
                 if (timerCurrentlyRunning) {
+                    Timber.wtf("Two or more timers active!");
                     return; //Should never happen! If this happens, two timers are active.
                 } else {
                     timerCurrentlyRunning = true;
-                    Log.d(TAG, "Update map by timer at " + new Date());
+                    Timber.d("Update map by timer at " + new Date());
                 }
                 aircraftMap = convertAricraftMap(aircraftBundleMap);
                 Iterator<String> it = aircraftMap.keySet().iterator();
@@ -364,7 +406,7 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
                     Date now = new Date();
                     long diffSeconds = (now.getTime() - aircraftMap.get(address).getLastSeen().getTime()) / 1000;
                     // remove markers that are older than specified time e.g. 60 seconds to clean map
-                    if (diffSeconds > 60) { //TODO: let user set diffTime in settings
+                    if (diffSeconds > aircraftTimeoutInSec) {
                         Intent intent = new Intent("AIRCRAFT_ACTION");
                         //intent.setAction("REMOVE_AIRCRAFT");
                         intent.putExtra("AIRCRAFT_ACTION", "REMOVE_AIRCRAFT");
@@ -373,7 +415,7 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
 
                         it.remove();
                         aircraftBundleMap.remove(address);
-                        Log.d(TAG, "Removed " + address + ", diff: " + diffSeconds + "s");
+                        Timber.d("Removed " + address + ", diff: " + diffSeconds + "s");
                         continue;
                     }
                     //do not delete WIP! 2017-11-05
@@ -400,12 +442,12 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
                         });
                     }*/
                 }
-                Log.d(TAG, "Finished updating map.");
+                Timber.d("Finished updating map.");
                 timerCurrentlyRunning = false;
             }
         }, initialDelayInSeconds, delayInSeconds, TimeUnit.SECONDS); //update aircrafts every few seconds
 
-        Log.d(TAG, "Service resumed updating map");
+        Timber.d("Service resumed updating map");
     }
 
     public void pauseUpdatingMap() {
@@ -417,7 +459,7 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
 
         timerCurrentlyRunning = false;
 
-        Log.d(TAG, "Service paused updating map");
+        Timber.d("Service paused updating map");
     }
 
     private Map<String, Aircraft> convertAricraftMap(Map<String, AircraftBundle> aircraftBundleMap) {
@@ -436,11 +478,6 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
         }
 
         return resultMap;
-    }
-
-    boolean mapCurrentlyUpdating = false;
-    public void mapUpdatingStatus(boolean updating) {
-        mapCurrentlyUpdating = updating;
     }
 
 
