@@ -5,7 +5,8 @@
     <!-- APRS empty dialog -->
     <string name="hint_aprs_filter">(empty APRS filter --- danger!)</string>
     <string name="aprs_filter_title">"Set APRS filter"</string>
-    <string name="empty_aprs_filter_message">"Caution: An empty APRS filter can make the app extreme slow."</string>
+    <string name="empty_aprs_filter_message">"Caution: An empty APRS filter can make the app extreme slow. Long click your position on the map to set a new filter."</string>
+    <string name="empty_aprs_filter_toast">"Long click your position on the map to set a new filter."</string>
 
     <!-- Main Menu -->
     <string name="action_settings">Settings</string>
@@ -47,6 +48,10 @@
     <string name="summary_map_type_preference">Terrain</string>
     <string name="dialog_title_map_type_preference">Map type</string>
 
+    <string name="key_keepscreenon_preference">keepscreenon_preference</string>
+    <string name="title_keepscreenon_preference">Keep Screen On</string>
+    <string name="summary_keepscreenon_preference">off</string>
+
     <string name="key_shownonmoving_preference">shownonmoving_preference</string>
     <string name="title_shownonmoving_preference">Show Non-Moving</string>
     <string name="summary_shownonmoving_preference">on</string>
@@ -64,6 +69,11 @@
     <string name="summary_aircraft_colorisation_preference">Altitude</string>
     <string name="dialog_title_colorisation_preference">Colorisation</string>
 
+    <string name="key_aircraft_timeout_preference">timeout_aircraft_preference</string>
+    <string name="title_timeout_preference">Remove inactive aircraft after</string>
+    <string name="summary_aircraft_timeout_preference">Timeout</string>
+    <string name="dialog_title_timeout_preference">Timeout</string>
+
     <string name="key_receiver_colorisation_preference">colorisation_receiver_preference</string>
     <string name="summary_receiver_colorisation_preference">Aircraft Count</string>
 
@@ -80,6 +90,14 @@
     <string name="altitude">Altitude</string>
     <string name="speed">Speed</string>
     <string name="aircraft_type">Aircraft type</string>
+
+    <string name="time_30s">30s</string>
+    <string name="time_1m">1m</string>
+    <string name="time_2m">2m</string>
+    <string name="time_5m">5m</string>
+    <string name="time_10m">10m</string>
+    <string name="time_30m">30m</string>
+    <string name="time_1h">1h</string>
 
     <string name="aircraft_count">Aircraft Count</string>
     <string name="beacon_count">Beacon Count</string>

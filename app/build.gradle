@@ -1,15 +1,15 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 26
+    compileSdkVersion 27
     buildToolsVersion "26.0.2"
 
     defaultConfig {
         applicationId "com.meisterschueler.ognviewer"
         minSdkVersion 15
-        targetSdkVersion 26
-        versionCode 26
-        versionName "1.3.3"
+        targetSdkVersion 27
+        versionCode 27
+        versionName "1.3.4"
     }
 
     buildTypes {
@@ -22,12 +22,13 @@ android {
 
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
-    compile 'com.google.android.gms:play-services-maps:11.4.2'
-    compile 'com.google.android.gms:play-services-location:11.4.2'
+    compile 'com.google.android.gms:play-services-maps:11.8.0'
+    compile 'com.google.android.gms:play-services-location:11.8.0'
     compile 'org.ogn:ogn-commons-java:2.0.0-SNAPSHOT'
     compile 'org.ogn:ogn-client-java:1.0.0-SNAPSHOT'
     compile 'com.google.maps.android:android-maps-utils:0.5'
     compile 'co.uk.rushorm:rushandroid:1.2.0'
     testCompile 'junit:junit:4.12'
     testCompile 'org.robolectric:robolectric:3.4.2'
+    implementation 'com.jakewharton.timber:timber:4.6.0'
 }
