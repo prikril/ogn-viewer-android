@@ -1,6 +1,8 @@
 package com.meisterschueler.ognviewer;
 
 import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
@@ -9,8 +11,11 @@ import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Binder;
+import android.os.Build;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
+import android.support.annotation.RequiresApi;
+import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.widget.Toast;
 
@@ -288,14 +293,31 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
 
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, new Intent(this, MapsActivity.class), 0);
 
-        Notification notification = new Notification.Builder(getApplicationContext())
+        String CHANNEL_ID = "com.meisterschueler.ognviewer.background";
+        String CHANNEL_NAME = "OGN in background";
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            createNotificationChannel(CHANNEL_ID, CHANNEL_NAME);
+        }
+
+        Notification notification = new NotificationCompat.Builder(getApplicationContext(), CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_stat)
                 .setContentTitle("OGN Viewer")
                 .setContentText("Version " + versionName)
                 .setContentIntent(pendingIntent)
-                .getNotification();
+                .build();
 
         startForeground(R.string.notification_id, notification);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private void createNotificationChannel(String channelId, String channelName) {
+        NotificationChannel notificationChannel = null;
+        notificationChannel = new NotificationChannel(channelId, channelName, NotificationManager.IMPORTANCE_LOW);
+        notificationChannel.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
+        NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        if (manager != null) {
+            manager.createNotificationChannel(notificationChannel);
+        }
     }
 
     @Override
