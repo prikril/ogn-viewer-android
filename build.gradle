@@ -3,6 +3,10 @@
 buildscript {
     repositories {
         jcenter()
+        maven {
+            url 'https://maven.google.com/'
+            name 'Google'
+        }
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:3.0.1'
@@ -18,5 +22,9 @@ allprojects {
         mavenLocal()
         maven { url "http://maven.rushorm.com" }
         maven { url "https://maven.google.com" } //for google-maps 11.4 and up
+        maven {
+            url 'https://maven.google.com/'
+            name 'Google'
+        }
     }
 }
