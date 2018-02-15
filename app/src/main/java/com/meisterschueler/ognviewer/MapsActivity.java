@@ -405,7 +405,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     private void resumeUpdatingMap() {
-        if (ognService != null) {
+        if (ognService != null && mMap != null) {
             ognService.resumeUpdatingMap(mMap.getProjection().getVisibleRegion().latLngBounds);
         }
     }

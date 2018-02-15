@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 27
-    buildToolsVersion "26.0.2"
+    buildToolsVersion "27.0.3"
 
     defaultConfig {
         applicationId "com.meisterschueler.ognviewer"
@@ -27,6 +27,7 @@ dependencies {
     compile 'org.ogn:ogn-commons-java:2.0.0-SNAPSHOT'
     compile 'org.ogn:ogn-client-java:1.0.0-SNAPSHOT'
     compile 'com.google.maps.android:android-maps-utils:0.5'
+    compile "com.android.support:support-v4:27.0.2"
     compile 'co.uk.rushorm:rushandroid:1.2.0'
     testCompile 'junit:junit:4.12'
     testCompile 'org.robolectric:robolectric:3.4.2'
