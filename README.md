@@ -7,7 +7,7 @@ OGN can receive signals from gliders, tow planes, helicopters, etc.
 
 This app is a flight radar for small aircraft with FLARM equipment.
 
-Current version: 1.3.4
+Current version: 1.3.5
 
 See [release notes](release-notes.md) for details.
 

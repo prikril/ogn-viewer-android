@@ -72,7 +72,7 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
     LocationManager locManager;
     Location currentLocation = null;
     private ScheduledExecutorService scheduledTaskExecutor;
-    private boolean refreshingActive = true; // if true, markers on map should be updated
+    private boolean refreshingActive = false; // if true, markers on map should be updated
     private boolean mapCurrentlyUpdating = false; // if true, the map is currently updating (new updates should wait)
     private int aircraftTimeoutInSec = 300; //TODO: extract default value;
 
@@ -400,10 +400,14 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
     public void resumeUpdatingMap(LatLngBounds latLngBounds) {
         this.latLngBounds = latLngBounds;
         refreshingActive = true;
-
         if(!ognConnected) {
-            //this happens when no filter is set and onStartCommand was not called
+            //This happens when no filter is set and onStartCommand was not called.
             return;
+        }
+
+        if (scheduledTaskExecutor != null) {
+            Timber.d("Timer was already resumed!");
+            return; //This happens when filter is already set and modified in MapsActivity.
         }
 
         final long initialDelayInSeconds = 2L;

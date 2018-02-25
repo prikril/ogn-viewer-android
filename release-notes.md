@@ -1,5 +1,9 @@
 # OGN Viewer Release Notes
 
+## 1.3.5
+* Fixed: Notification not visible on Android 7 and up
+* Fixed: App crash at start on Android 8.1
+
 ## 1.3.4
 * Fixed: bugs from receiver markers
 * Fixed: OutOfMemory error with many markers
