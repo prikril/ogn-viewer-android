@@ -79,6 +79,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             OgnService.LocalBinder localBinder = (OgnService.LocalBinder) binder;
             ognService = localBinder.getService();
             ognServiceConnected = true;
+            changeAircraftTimeout(); // important to do that after service connected!
             updateKnownMarkers();
         }
 
@@ -200,6 +201,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             //receivers
             Boolean showreceivers = sharedPreferences.getBoolean(getString(R.string.key_showreceivers_preference), true);
+            // receriverMarkerMap should always be empty with current implementation 2018-02-26
             for (Marker m : receiverMarkerMap.values()) { //this is not slow!
                 m.setVisible(showreceivers);
             }
@@ -330,12 +332,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         Boolean showReceivers = sharedPreferences.getBoolean(getString(R.string.key_showreceivers_preference), false);
         Boolean isActive = (sharedPreferences.getBoolean(getString(R.string.key_shownotactive_preference), true) || aircraftCounter > 0 || beaconCounter > 0);
+        String altitudeUnit = sharedPreferences.getString(getString(R.string.key_altitude_unit_preference), getString(R.string.unit_meters));
 
         m.setVisible(showReceivers && isActive);
 
-        String title = receiverName + " (" + altitude + "m)";
+        float convertedAltitude = altitude;
+        if (altitudeUnit.equals(getString(R.string.unit_feet))) {
+            convertedAltitude = Utils.metersToFeet(altitude);
+        }
+        String title = String.format(Locale.US, "%s (%.1f %s)", receiverName, convertedAltitude, altitudeUnit);
         String humanTime = DateFormat.format("HH:mm:ss", timestamp).toString();
-        String content = String.format(Locale.US, "Aircrafts: %d, Beacons: %d, \ntime: %s",
+        String content = String.format(Locale.US, "Aircraft: %d, Beacons: %d, \ntime: %s",
                 aircraftCounter, beaconCounter, humanTime);
 
         m.setTitle(title);
@@ -449,6 +456,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         Boolean showaircrafts = sharedPreferences.getBoolean(getString(R.string.key_showaircrafts_preference), true);
         Boolean shownonmoving = sharedPreferences.getBoolean(getString(R.string.key_shownonmoving_preference), true);
         Boolean showregistration = sharedPreferences.getBoolean(getString(R.string.key_showregistration_preference), true);
+        String altitudeUnit = sharedPreferences.getString(getString(R.string.key_altitude_unit_preference), getString(R.string.unit_meters));
+        String gsUnit = sharedPreferences.getString(getString(R.string.key_groundspeed_unit_preference), getString(R.string.unit_kmh));
+        String vsUnit = sharedPreferences.getString(getString(R.string.key_verticalspeed_unit_preference), getString(R.string.unit_ms));
 
         if (!showaircrafts || !shownonmoving && groundSpeed < 5) {
             m.setVisible(false);
@@ -471,8 +481,25 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             //maybe add aircraftType? 2018-02-11
         }
         String humanTime = DateFormat.format("HH:mm:ss", timestamp).toString();
-        String content = String.format(Locale.US,"alt:%d m, gs:%d km/h, vs:%.1f m/s, \ntime:%s, rec:%s",
-                (int) alt, (int) groundSpeed, climbRate, humanTime, receiverName);
+        int convertedAltitude = (int) alt;
+        if (altitudeUnit.equals(getString(R.string.unit_feet))) {
+            convertedAltitude = (int) Utils.metersToFeet(alt);
+        }
+
+        int convertedGroudSpeed = (int) groundSpeed;
+        if (gsUnit.equals(getString(R.string.unit_mph))) {
+            convertedGroudSpeed = (int) Utils.kmhToMph(groundSpeed);
+        } else if (gsUnit.equals(getString(R.string.unit_kt))) {
+            convertedGroudSpeed = (int) Utils.kmhToKt(groundSpeed);
+        }
+
+        float convertedClimbRate = climbRate;
+        if (vsUnit.equals(getString(R.string.unit_fpm))) {
+            convertedClimbRate = Utils.msToFpm(climbRate);
+        }
+
+        String content = String.format(Locale.US,"alt:%d %s, gs:%d %s, vs:%.1f %s, \ntime:%s, rec:%s",
+                convertedAltitude, altitudeUnit, convertedGroudSpeed, gsUnit, convertedClimbRate, vsUnit, humanTime, receiverName);
 
         m.setTitle(title);
         m.setSnippet(content);

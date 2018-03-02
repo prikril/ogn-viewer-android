@@ -55,4 +55,36 @@
         <item>@string/beacon_count</item>
         <item>@string/altitude</item>
     </string-array>
+
+    <string-array name="entries_altitude_unit_preference">
+        <item>@string/unit_meters</item>
+        <item>@string/unit_feet</item>
+    </string-array>
+
+    <string-array name="entryvalues_altitude_unit_preference">
+        <item>@string/unit_meters</item>
+        <item>@string/unit_feet</item>
+    </string-array>
+
+    <string-array name="entries_groundspeed_unit_preference">
+        <item>@string/unit_kmh</item>
+        <item>@string/unit_mph</item>
+        <item>@string/unit_kt</item>
+    </string-array>
+
+    <string-array name="entryvalues_groundspeed_unit_preference">
+        <item>@string/unit_kmh</item>
+        <item>@string/unit_mph</item>
+        <item>@string/unit_kt</item>
+    </string-array>
+
+    <string-array name="entries_verticalspeed_unit_preference">
+        <item>@string/unit_ms</item>
+        <item>@string/unit_fpm</item>
+    </string-array>
+
+    <string-array name="entryvalues_verticalspeed_unit_preference">
+        <item>@string/unit_ms</item>
+        <item>@string/unit_fpm</item>
+    </string-array>
 </resources>

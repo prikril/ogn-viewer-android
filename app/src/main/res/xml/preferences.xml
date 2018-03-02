@@ -112,4 +112,37 @@
 
     </PreferenceCategory>
 
+    <PreferenceCategory
+        android:title="Units"
+        android:key="category_appearance_preference">
+
+        <ListPreference
+            android:key="@string/key_altitude_unit_preference"
+            android:title="@string/title_altitude_unit_preference"
+            android:summary="@string/summary_altitude_unit_preference"
+            android:entries="@array/entries_altitude_unit_preference"
+            android:entryValues="@array/entryvalues_altitude_unit_preference"
+            android:dialogTitle="@string/dialog_title_altitude_unit_preference"
+            android:defaultValue="@string/unit_meters"/>
+
+        <ListPreference
+            android:key="@string/key_groundspeed_unit_preference"
+            android:title="@string/title_groundspeed_unit_preference"
+            android:summary="@string/summary_groundspeed_unit_preference"
+            android:entries="@array/entries_groundspeed_unit_preference"
+            android:entryValues="@array/entryvalues_groundspeed_unit_preference"
+            android:dialogTitle="@string/dialog_title_groundspeed_unit_preference"
+            android:defaultValue="@string/unit_kmh"/>
+
+        <ListPreference
+            android:key="@string/key_verticalspeed_unit_preference"
+            android:title="@string/title_verticalspeed_unit_preference"
+            android:summary="@string/summary_verticalspeed_unit_preference"
+            android:entries="@array/entries_verticalspeed_unit_preference"
+            android:entryValues="@array/entryvalues_verticalspeed_unit_preference"
+            android:dialogTitle="@string/dialog_title_verticalspeed_unit_preference"
+            android:defaultValue="@string/unit_ms"/>
+
+    </PreferenceCategory>
+
 </PreferenceScreen>

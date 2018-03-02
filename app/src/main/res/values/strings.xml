@@ -65,9 +65,9 @@
     <string name="summary_rotate_aircraft_preference">off</string>
 
     <string name="key_aircraft_colorisation_preference">colorisation_aircraft_preference</string>
-    <string name="title_colorisation_preference">Colorisation</string>
+    <string name="title_colorisation_preference">Coloration</string>
     <string name="summary_aircraft_colorisation_preference">Altitude</string>
-    <string name="dialog_title_colorisation_preference">Colorisation</string>
+    <string name="dialog_title_colorisation_preference">Coloration</string>
 
     <string name="key_aircraft_timeout_preference">timeout_aircraft_preference</string>
     <string name="title_timeout_preference">Remove inactive aircraft after</string>
@@ -81,6 +81,20 @@
     <string name="title_shownotactive_preference">Show Not-active</string>
     <string name="summary_shownotactive_preference">on</string>
 
+    <string name="key_altitude_unit_preference">altitude_preference</string>
+    <string name="title_altitude_unit_preference">Altitude Unit</string>
+    <string name="summary_altitude_unit_preference">Altitude Unit</string>
+    <string name="dialog_title_altitude_unit_preference">Altitude Unit</string>
+
+    <string name="key_groundspeed_unit_preference">groundspeed_preference</string>
+    <string name="title_groundspeed_unit_preference">Ground Speed Unit</string>
+    <string name="summary_groundspeed_unit_preference">Ground Speed Unit</string>
+    <string name="dialog_title_groundspeed_unit_preference">Ground Speed Unit</string>
+
+    <string name="key_verticalspeed_unit_preference">verticalspeed_preference</string>
+    <string name="title_verticalspeed_unit_preference">Vertical Speed Unit</string>
+    <string name="summary_verticalspeed_unit_preference">Vertical Speed Unit</string>
+    <string name="dialog_title_verticalspeed_unit_preference">Vertical Speed Unit</string>
 
     <!-- Entry keys and values of arrays -->
     <string name="terrain">Terrain</string>
@@ -91,13 +105,21 @@
     <string name="speed">Speed</string>
     <string name="aircraft_type">Aircraft type</string>
 
-    <string name="time_30s">30s</string>
-    <string name="time_1m">1m</string>
-    <string name="time_2m">2m</string>
-    <string name="time_5m">5m</string>
-    <string name="time_10m">10m</string>
-    <string name="time_30m">30m</string>
-    <string name="time_1h">1h</string>
+    <string name="time_30s">30 s</string>
+    <string name="time_1m">1 min</string>
+    <string name="time_2m">2 min</string>
+    <string name="time_5m">5 min</string>
+    <string name="time_10m">10 min</string>
+    <string name="time_30m">30 min</string>
+    <string name="time_1h">1 h</string>
+
+    <string name="unit_meters">m</string>
+    <string name="unit_feet">ft</string>
+    <string name="unit_kmh">km/h</string>
+    <string name="unit_mph">mph</string>
+    <string name="unit_kt">kt</string>
+    <string name="unit_ms">m/s</string>
+    <string name="unit_fpm">ft/min</string>
 
     <string name="aircraft_count">Aircraft Count</string>
     <string name="beacon_count">Beacon Count</string>

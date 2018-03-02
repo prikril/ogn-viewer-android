@@ -30,6 +30,9 @@ public class PrefsFragment extends PreferenceFragment implements SharedPreferenc
         updateFragmentValues(sharedPreferences, getString(R.string.key_aircraft_timeout_preference));
         updateFragmentValues(sharedPreferences, getString(R.string.key_shownotactive_preference));
         updateFragmentValues(sharedPreferences, getString(R.string.key_receiver_colorisation_preference));
+        updateFragmentValues(sharedPreferences, getString(R.string.key_altitude_unit_preference));
+        updateFragmentValues(sharedPreferences, getString(R.string.key_groundspeed_unit_preference));
+        updateFragmentValues(sharedPreferences, getString(R.string.key_verticalspeed_unit_preference));
     }
 
     @Override
@@ -125,6 +128,15 @@ public class PrefsFragment extends PreferenceFragment implements SharedPreferenc
             pref.setSummary(value);
         } else if (key.equals(getString(R.string.key_receiver_colorisation_preference))) {
             String value = sharedPreferences.getString(getString(R.string.key_receiver_colorisation_preference), getString(R.string.aircraft_count));
+            pref.setSummary(value);
+        } else if (key.equals(getString(R.string.key_altitude_unit_preference))) {
+            String value = sharedPreferences.getString(getString(R.string.key_altitude_unit_preference), getString(R.string.unit_meters));
+            pref.setSummary(value);
+        } else if (key.equals(getString(R.string.key_groundspeed_unit_preference))) {
+            String value = sharedPreferences.getString(getString(R.string.key_groundspeed_unit_preference), getString(R.string.unit_kmh));
+            pref.setSummary(value);
+        } else if (key.equals(getString(R.string.key_verticalspeed_unit_preference))) {
+            String value = sharedPreferences.getString(getString(R.string.key_verticalspeed_unit_preference), getString(R.string.unit_ms));
             pref.setSummary(value);
         }
     }
