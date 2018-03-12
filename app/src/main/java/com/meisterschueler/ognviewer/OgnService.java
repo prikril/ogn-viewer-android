@@ -1,5 +1,7 @@
 package com.meisterschueler.ognviewer;
 
+import android.Manifest;
+import android.app.Activity;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -13,12 +15,21 @@ import android.location.LocationManager;
 import android.os.Binder;
 import android.os.Build;
 import android.os.IBinder;
+import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.support.annotation.RequiresApi;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.widget.Toast;
 
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.SettingsClient;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.meisterschueler.ognviewer.common.FlarmMessage;
@@ -61,7 +72,7 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
     LocalBroadcastManager localBroadcastManager;
     IBinder binder = new LocalBinder();
     //Map<String, AircraftBundle> aircraftMap = new ConcurrentHashMap<>(); //von upstream 2017-11-02
-    private Map<String,Aircraft> aircraftMap = new HashMap<>(); //TODO: von dominik, entfernen? 2017-11-02
+    private Map<String, Aircraft> aircraftMap = new HashMap<>(); //TODO: von dominik, entfernen? 2017-11-02
 
     int maxAircraftCounter = 0;
     int maxBeaconCounter = 0;
@@ -75,10 +86,12 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
     private boolean refreshingActive = false; // if true, markers on map should be updated
     private boolean mapCurrentlyUpdating = false; // if true, the map is currently updating (new updates should wait)
     private int aircraftTimeoutInSec = 300; //TODO: extract default value;
+    private boolean locationUpdatesAlreadyRequested = false;
 
     public void setMapUpdatingStatus(boolean updating) {
         mapCurrentlyUpdating = updating;
     }
+
     public void setAircraftTimeout(int timoutInSec) {
         aircraftTimeoutInSec = timoutInSec;
     }
@@ -91,10 +104,11 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
         tcpServer = new TcpServer();
         tcpServer.startServer();
         //TODO: refactor this and use fused location API 2017-11-15
+        /*
         Runnable locationUpdate = new Runnable() {
             @Override
             public void run() {
-                while(true) {
+                while (true) {
                     try {
                         LocationManager locManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
                         currentLocation = locManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
@@ -118,7 +132,74 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
         };
         Thread locationUpdateThread = new Thread(locationUpdate);
         locationUpdateThread.start();
+        */
+
+
     }
+
+    // Trigger new location updates at interval
+    protected void startLocationUpdates(Activity activity) {
+        Context context = getApplicationContext();
+        LocationRequest locationRequest;
+
+        long UPDATE_INTERVAL = 10 * 1000;  /* 10 secs */
+        long FASTEST_INTERVAL = 2000; /* 2 sec */
+
+        // Create the location request to start receiving updates
+        locationRequest = new LocationRequest();
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        locationRequest.setInterval(UPDATE_INTERVAL);
+        locationRequest.setFastestInterval(FASTEST_INTERVAL);
+
+        // Create LocationSettingsRequest object using location request
+        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder();
+        builder.addLocationRequest(locationRequest);
+        LocationSettingsRequest locationSettingsRequest = builder.build();
+
+        // Check whether location settings are satisfied
+        // https://developers.google.com/android/reference/com/google/android/gms/location/SettingsClient
+        SettingsClient settingsClient = LocationServices.getSettingsClient(context);
+        settingsClient.checkLocationSettings(locationSettingsRequest);
+
+        final String fineLocationPermissionString = Manifest.permission.ACCESS_FINE_LOCATION;
+        final String coarseLocationPermissionString = Manifest.permission.ACCESS_COARSE_LOCATION;
+        // maybe fine should be enough? 2018-03-12
+        if (ContextCompat.checkSelfPermission(context, fineLocationPermissionString) != PackageManager.PERMISSION_GRANTED ||
+                ContextCompat.checkSelfPermission(context, coarseLocationPermissionString) != PackageManager.PERMISSION_GRANTED) {
+            // Permission is not granted
+            // Should we show an explanation?
+            if (ActivityCompat.shouldShowRequestPermissionRationale(activity, fineLocationPermissionString)) {
+
+                // Show an explanation to the user *asynchronously* -- don't block
+                // this thread waiting for the user's response! After the user
+                // sees the explanation, try again to request the permission.
+                Timber.d("Location permisson already denied");
+                // ask again? in activity?
+                // onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults)
+                // https://developer.android.com/training/permissions/requesting.html#java
+            } else {
+                // User was never asked to allow location updates. Ask now!
+                final int REQUEST_CODE = 1234; // TODO: extract this constant
+                ActivityCompat.requestPermissions(activity, new String[]{fineLocationPermissionString, coarseLocationPermissionString}, REQUEST_CODE);
+            }
+            return;
+        } else {
+            // Permission has already been granted
+            Timber.d("Location permisson granted");
+        }
+        if (locationUpdatesAlreadyRequested) {
+            return;
+        }
+        LocationServices.getFusedLocationProviderClient(context).requestLocationUpdates(locationRequest, new LocationCallback() {
+                    @Override
+                    public void onLocationResult(LocationResult locationResult) {
+                        tcpServer.updatePosition(locationResult.getLastLocation());
+                    }
+                },
+                Looper.myLooper());
+        locationUpdatesAlreadyRequested = true;
+    }
+
 
     @Override
     public void onUpdate(AircraftBeacon aircraftBeacon, AircraftDescriptor aircraftDescriptor) {
@@ -307,6 +388,7 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
                 .build();
 
         startForeground(R.string.notification_id, notification);
+        //startLocationUpdates();
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
