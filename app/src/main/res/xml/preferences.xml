@@ -145,4 +145,16 @@
 
     </PreferenceCategory>
 
+    <PreferenceCategory
+        android:title="Navigation"
+        android:key="category_appearance_preference">
+
+        <SwitchPreference
+            android:key="@string/key_tcp_server_active_preference"
+            android:title="@string/title_tcp_server_active_preference"
+            android:summary="@string/summary_tcp_server_active_preference"
+            android:defaultValue="false"/>
+
+    </PreferenceCategory>
+
 </PreferenceScreen>

@@ -1,13 +1,21 @@
 package com.meisterschueler.ognviewer.ui;
 
+import android.Manifest;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.preference.CheckBoxPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
+import android.preference.SwitchPreference;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 
 import com.meisterschueler.ognviewer.OgnService;
 import com.meisterschueler.ognviewer.R;
+
+import timber.log.Timber;
 
 public class PrefsFragment extends PreferenceFragment implements SharedPreferences.OnSharedPreferenceChangeListener {
 
@@ -33,6 +41,7 @@ public class PrefsFragment extends PreferenceFragment implements SharedPreferenc
         updateFragmentValues(sharedPreferences, getString(R.string.key_altitude_unit_preference));
         updateFragmentValues(sharedPreferences, getString(R.string.key_groundspeed_unit_preference));
         updateFragmentValues(sharedPreferences, getString(R.string.key_verticalspeed_unit_preference));
+        updateFragmentValues(sharedPreferences, getString(R.string.key_tcp_server_active_preference));
     }
 
     @Override
@@ -52,6 +61,13 @@ public class PrefsFragment extends PreferenceFragment implements SharedPreferenc
         updateFragmentValues(sharedPreferences, key);
         if (key.equals(getString(R.string.key_aprsfilter_preference))) {
             getActivity().startService(new Intent(getActivity(), OgnService.class));
+        } else if (key.equals(getString(R.string.key_tcp_server_active_preference))) {
+            Boolean value = sharedPreferences.getBoolean(getString(R.string.key_tcp_server_active_preference), false);
+            if (value) {
+                requestLocationPermission();
+            } else {
+                //TODO: stop tcp server
+            }
         }
     }
 
@@ -138,6 +154,37 @@ public class PrefsFragment extends PreferenceFragment implements SharedPreferenc
         } else if (key.equals(getString(R.string.key_verticalspeed_unit_preference))) {
             String value = sharedPreferences.getString(getString(R.string.key_verticalspeed_unit_preference), getString(R.string.unit_ms));
             pref.setSummary(value);
+        } else if (key.equals(getString(R.string.key_tcp_server_active_preference))) {
+            Boolean value = sharedPreferences.getBoolean(getString(R.string.key_tcp_server_active_preference), false);
+            if (value) {
+                pref.setSummary("on");
+            } else {
+                pref.setSummary("off");
+            }
+        }
+    }
+
+    private void requestLocationPermission() {
+        final String fineLocationPermissionString = Manifest.permission.ACCESS_FINE_LOCATION;
+
+        if (ContextCompat.checkSelfPermission(getActivity(), fineLocationPermissionString) != PackageManager.PERMISSION_GRANTED) {
+            final int REQUEST_CODE = 1122334455; // TODO: extract this constant
+            ActivityCompat.requestPermissions(getActivity(), new String[]{fineLocationPermissionString}, REQUEST_CODE);
+        } else {
+            // Permission has already been granted
+            Timber.d("Location permisson granted");
+        }
+    }
+
+    public void setTCPServerActiveState(Boolean active) {
+        SwitchPreference tcpPref = (SwitchPreference) findPreference(getString(R.string.key_tcp_server_active_preference));
+
+        if (active) {
+            tcpPref.setSummary("on");
+            tcpPref.setChecked(true);
+        } else {
+            tcpPref.setSummary("off");
+            tcpPref.setChecked(false);
         }
     }
 }

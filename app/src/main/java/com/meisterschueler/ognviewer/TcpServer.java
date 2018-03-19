@@ -4,19 +4,17 @@ package com.meisterschueler.ognviewer;
 import android.location.Location;
 
 import com.meisterschueler.ognviewer.common.FlarmMessage;
+import com.meisterschueler.ognviewer.common.FlarmMessageSenderTask;
 
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Calendar;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class TcpServer {
-    private static final long MAX_TIME = 30000; // keep flarm position for 30s
-    private static final int MIN_DISTANCE = 2000; // if distance to flarm is < 2000m it wont be shown
+    private Thread serverThread;
+    private ServerSocket serverSocket;
     private Socket clientSocket = null;
     private boolean stopped = true;
     private Map<String, FlarmMessage> messageMap = new ConcurrentHashMap<>();
@@ -26,7 +24,6 @@ public class TcpServer {
         Runnable serverTask = new Runnable() {
             @Override
             public void run() {
-                ServerSocket serverSocket = null;
                 try {
                     serverSocket = new ServerSocket(4353);
                 } catch (IOException e) {
@@ -51,7 +48,7 @@ public class TcpServer {
                 }
             }
         };
-        Thread serverThread = new Thread(serverTask);
+        serverThread = new Thread(serverTask);
         serverThread.start();
     }
 
@@ -65,46 +62,24 @@ public class TcpServer {
                 e.printStackTrace();
             }
         }
+        if (serverThread != null) {
+            serverThread.interrupt();
+        }
+        if (serverSocket != null) {
+            try {
+                serverSocket.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
-    public void updatePosition(Location location) {
+    public void updatePosition(Location ownLocation) {
         if (clientSocket == null || clientSocket.isClosed()) {
             return;
         }
-
-        long time = Calendar.getInstance().getTime().getTime();
-        DataOutputStream objectOutput = null;
-
-        try {
-            objectOutput = new DataOutputStream(clientSocket.getOutputStream());
-        } catch (IOException e) {
-            e.printStackTrace();
-            return;
-        }
-
-        for(Iterator<Map.Entry<String, FlarmMessage>> it = messageMap.entrySet().iterator(); it.hasNext(); ) {
-            Map.Entry<String, FlarmMessage> entry = it.next();
-            if(time - entry.getValue().getTime() > MAX_TIME) {
-                it.remove();
-            } else {
-                FlarmMessage flarmMessage = entry.getValue();
-                flarmMessage.setOwnLocation(location);
-                if (flarmMessage.getDistance() < MIN_DISTANCE) {
-                    continue;
-                }
-                String message = flarmMessage.toString();
-                try {
-                    objectOutput.write((message + "\r\n").getBytes("US-ASCII"));
-                } catch (IOException e) {
-                    //e.printStackTrace();
-                    try {
-                        clientSocket.close();
-                    } catch (IOException e1) {
-                        e1.printStackTrace();
-                    }
-                }
-            }
-        }
+        // since Android 7 network requests must be async to avoid NetworkOnMainThreadException
+        new FlarmMessageSenderTask(clientSocket, messageMap, ownLocation).execute();
     }
 
     public void addFlarmMessage(FlarmMessage flarmMessage) {

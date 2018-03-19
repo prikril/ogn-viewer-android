@@ -10,8 +10,6 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.location.Location;
-import android.location.LocationManager;
 import android.os.Binder;
 import android.os.Build;
 import android.os.IBinder;
@@ -24,6 +22,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.widget.Toast;
 
+import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
@@ -71,7 +70,7 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
     private boolean ognConnected = false; //is true, when service was started (onStartCommand)
     LocalBroadcastManager localBroadcastManager;
     IBinder binder = new LocalBinder();
-    //Map<String, AircraftBundle> aircraftMap = new ConcurrentHashMap<>(); //von upstream 2017-11-02
+    //Map<String, AircraftBundle> aircraftMap = new ConcurrentHashMap<>(); // for WIP 2018-03-19
     private Map<String, Aircraft> aircraftMap = new HashMap<>(); //TODO: von dominik, entfernen? 2017-11-02
 
     int maxAircraftCounter = 0;
@@ -79,14 +78,13 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
     Map<String, ReceiverBundle> receiverBundleMap = new ConcurrentHashMap<>();
     Map<String, AircraftBundle> aircraftBundleMap = new ConcurrentHashMap<>();
 
-
-    LocationManager locManager;
-    Location currentLocation = null;
     private ScheduledExecutorService scheduledTaskExecutor;
     private boolean refreshingActive = false; // if true, markers on map should be updated
     private boolean mapCurrentlyUpdating = false; // if true, the map is currently updating (new updates should wait)
     private int aircraftTimeoutInSec = 300; //TODO: extract default value;
     private boolean locationUpdatesAlreadyRequested = false;
+    private FusedLocationProviderClient fusedLocationProviderClient;
+    private LocationCallback locationCallback;
 
     public void setMapUpdatingStatus(boolean updating) {
         mapCurrentlyUpdating = updating;
@@ -103,48 +101,18 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
     public OgnService() {
         tcpServer = new TcpServer();
         tcpServer.startServer();
-        //TODO: refactor this and use fused location API 2017-11-15
-        /*
-        Runnable locationUpdate = new Runnable() {
-            @Override
-            public void run() {
-                while (true) {
-                    try {
-                        LocationManager locManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-                        currentLocation = locManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-                        if (currentLocation != null) {
-                            tcpServer.updatePosition(currentLocation);
-                        }
-                    } catch (SecurityException se) {
-                        // accessing location is forbidden
-                    } catch (NullPointerException npe) {
-                        // context not available
-                    }
-
-                    try {
-                        Thread.sleep(1000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-
-            }
-        };
-        Thread locationUpdateThread = new Thread(locationUpdate);
-        locationUpdateThread.start();
-        */
-
-
     }
 
     // Trigger new location updates at interval
     protected void startLocationUpdates(Activity activity) {
+        if (locationUpdatesAlreadyRequested) {
+            return;
+        }
         Context context = getApplicationContext();
+        long UPDATE_INTERVAL = 5 * 1000;  /* 5 secs */
+        long FASTEST_INTERVAL = 1000; /* 1 sec */
+
         LocationRequest locationRequest;
-
-        long UPDATE_INTERVAL = 10 * 1000;  /* 10 secs */
-        long FASTEST_INTERVAL = 2000; /* 2 sec */
-
         // Create the location request to start receiving updates
         locationRequest = new LocationRequest();
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
@@ -187,17 +155,27 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
             // Permission has already been granted
             Timber.d("Location permisson granted");
         }
-        if (locationUpdatesAlreadyRequested) {
-            return;
+
+        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(context);
+        if (locationCallback == null) {
+            locationCallback = new LocationCallback() {
+                @Override
+                public void onLocationResult(LocationResult locationResult) {
+                    tcpServer.updatePosition(locationResult.getLastLocation());
+                }
+            };
         }
-        LocationServices.getFusedLocationProviderClient(context).requestLocationUpdates(locationRequest, new LocationCallback() {
-                    @Override
-                    public void onLocationResult(LocationResult locationResult) {
-                        tcpServer.updatePosition(locationResult.getLastLocation());
-                    }
-                },
-                Looper.myLooper());
+        fusedLocationProviderClient.requestLocationUpdates(locationRequest, locationCallback, Looper.myLooper());
         locationUpdatesAlreadyRequested = true;
+    }
+
+    public void stopLocationUpdates() {
+        // Does not really stop the TCP server but stop location updates!
+        // TCP server does not send packets without location updates.
+        if (fusedLocationProviderClient != null && locationCallback != null) {
+            fusedLocationProviderClient.removeLocationUpdates(locationCallback);
+        }
+        locationUpdatesAlreadyRequested = false;
     }
 
 
@@ -388,7 +366,6 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
                 .build();
 
         startForeground(R.string.notification_id, notification);
-        //startLocationUpdates();
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
@@ -448,6 +425,7 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
 
         Toast.makeText(this, "Disconnected from OGN", Toast.LENGTH_LONG).show();
 
+        stopLocationUpdates();
         tcpServer.stopServer();
         pauseUpdatingMap();
     }

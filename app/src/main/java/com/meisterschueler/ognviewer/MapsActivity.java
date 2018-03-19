@@ -1,8 +1,6 @@
 package com.meisterschueler.ognviewer;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -17,9 +15,8 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.os.IBinder;
 import android.os.Looper;
 import android.preference.PreferenceManager;
@@ -38,7 +35,6 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-//import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
@@ -87,14 +83,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
     private boolean ognServiceConnected = false;
     private boolean mapLoaded = false;
+    private CountDownTimer emptyFilterTimer;
+
     private ServiceConnection mConnection = new ServiceConnection() {
         public void onServiceConnected(ComponentName className, IBinder binder) {
             OgnService.LocalBinder localBinder = (OgnService.LocalBinder) binder;
             ognService = localBinder.getService();
             ognServiceConnected = true;
             changeAircraftTimeout(); // important to do that after service connected!
+            changeTCPServerState();
             updateKnownMarkers();
-            startLocationUpdates();
         }
 
         public void onServiceDisconnected(ComponentName className) {
@@ -104,12 +102,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             ognServiceConnected = false;
         }
     };
-
-    private void startLocationUpdates() {
-        if (ognService != null) {
-            ognService.startLocationUpdates(this);
-        }
-    }
 
     private void updateKnownAircrafts(final Map<String, AircraftBundle> aircraftMap) {
         for (final AircraftBundle bundle : aircraftMap.values()) {
@@ -146,7 +138,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 startActivity(i2);
                 break;
             case R.id.action_currentlocation:
-                startLocationUpdate();
+                zoomToCurrentLocation();
                 break;
 
             case R.id.action_about:
@@ -191,11 +183,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             changeMapType();
 
             changeKeepScreenOn();
-            changeAircraftTimeout();
+            changeAircraftTimeout(); //will not work here, because ognService connects async
 
             //receivers
             Boolean showreceivers = sharedPreferences.getBoolean(getString(R.string.key_showreceivers_preference), true);
-            // receriverMarkerMap should always be empty with current implementation 2018-02-26
+            // receiverMarkerMap should always be empty with current implementation 2018-02-26
             for (Marker m : receiverMarkerMap.values()) { //this is not slow!
                 m.setVisible(showreceivers);
             }
@@ -203,82 +195,85 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
-    protected void startLocationUpdate() {
+    void zoomToCurrentLocation() {
         final String coarseLocationPermissionString = Manifest.permission.ACCESS_COARSE_LOCATION;
 
         if (ContextCompat.checkSelfPermission(getApplicationContext(), coarseLocationPermissionString) != PackageManager.PERMISSION_GRANTED) {
             final int REQUEST_CODE = 54321; // TODO: extract this constant
             ActivityCompat.requestPermissions(this, new String[]{coarseLocationPermissionString}, REQUEST_CODE);
-            return;
         } else {
             // Permission has already been granted
             Timber.d("Location permisson granted");
-            zoomToCurrentLocation();
-        }
+            final LocationRequest locationRequest;
 
+            final long UPDATE_INTERVAL = 1000; /* 1 secs */
+            final long MAX_WAIT_TIME = 2000; /* 2 secs */
+            final long EXPIRE_TIME = 5000; /* 5 secs */
 
-    }
+            // Create the location request to start receiving updates
+            locationRequest = new LocationRequest();
+            locationRequest.setPriority(LocationRequest.PRIORITY_LOW_POWER);
+            locationRequest.setInterval(UPDATE_INTERVAL);
+            locationRequest.setMaxWaitTime(MAX_WAIT_TIME);
+            locationRequest.setExpirationDuration(EXPIRE_TIME);
+            locationRequest.setNumUpdates(1); //update only once
 
-    @SuppressLint("MissingPermission")
-    void zoomToCurrentLocation() {
-        final LocationRequest locationRequest;
+            // Create LocationSettingsRequest object using location request
+            LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder();
+            builder.addLocationRequest(locationRequest);
+            LocationSettingsRequest locationSettingsRequest = builder.build();
 
-        long UPDATE_INTERVAL = 1000;  /* 1 secs */
+            // Check whether location settings are satisfied
+            // https://developers.google.com/android/reference/com/google/android/gms/location/SettingsClient
+            SettingsClient settingsClient = LocationServices.getSettingsClient(getApplicationContext());
+            settingsClient.checkLocationSettings(locationSettingsRequest);
+            LocationServices.getFusedLocationProviderClient(getApplicationContext()).requestLocationUpdates(locationRequest, new LocationCallback() {
+                        @Override
+                        public void onLocationResult(LocationResult locationResult) {
+                            Location location = locationResult.getLastLocation();
+                            if (location != null) {
+                                LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
 
-        // Create the location request to start receiving updates
-        locationRequest = new LocationRequest();
-        locationRequest.setPriority(LocationRequest.PRIORITY_LOW_POWER);
-        locationRequest.setInterval(UPDATE_INTERVAL);
-        locationRequest.setNumUpdates(1); //update only once
+                                CameraPosition cameraPosition = new CameraPosition.Builder()
+                                        .target(latLng)
+                                        .zoom(7) // TODO: extract to constants or make user defined
+                                        .build();
+                                mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+                            }
 
-        // Create LocationSettingsRequest object using location request
-        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder();
-        builder.addLocationRequest(locationRequest);
-        LocationSettingsRequest locationSettingsRequest = builder.build();
-
-        // Check whether location settings are satisfied
-        // https://developers.google.com/android/reference/com/google/android/gms/location/SettingsClient
-        SettingsClient settingsClient = LocationServices.getSettingsClient(getApplicationContext());
-        settingsClient.checkLocationSettings(locationSettingsRequest);
-        LocationServices.getFusedLocationProviderClient(getApplicationContext()).requestLocationUpdates(locationRequest, new LocationCallback() {
-                    @Override
-                    public void onLocationResult(LocationResult locationResult) {
-                        Location location = locationResult.getLastLocation();
-                        if (location != null) {
-                            LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
-
-                            CameraPosition cameraPosition = new CameraPosition.Builder()
-                                    .target(latLng)
-                                    .zoom(7)
-                                    .build();
-                            mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
                         }
-
-                    }
-                },
-                Looper.myLooper());
+                    },
+                    Looper.myLooper());
+        }
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
         final int REQUEST_CODE = 54321; // TODO: extract this constant
+        final int EMPTY_FILTER_REQUEST_CODE = 2468; // TODO: extract this constant
         switch (requestCode) {
             case REQUEST_CODE: {
                 // If request is cancelled, the result arrays are empty.
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-
-                    // permission was granted, yay! Do the
-                    // contacts-related task you need to do.
+                    // permission was granted, yay!
                     zoomToCurrentLocation();
                 } else {
-
-                    // permission denied, boo! Disable the
-                    // functionality that depends on this permission.
-                    // Toast.makeText(getApplicationContext(), R.string.empty_aprs_filter_toast, Toast.LENGTH_LONG).show();
+                    // permission denied, boo!
                     Timber.d("Zoom to current location not allowed");
                 }
-                return;
+                break;
+            }
+            case EMPTY_FILTER_REQUEST_CODE: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    createFilterFromCurrentLocation();
+                } else {
+                    Timber.d("Could not get location for filter");
+                    editEmptyAprsFilter("");
+                }
+                break;
             }
 
             // other 'case' lines to check for other
@@ -334,6 +329,19 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
+    private void changeTCPServerState() {
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        Boolean active = sharedPreferences.getBoolean(getString(R.string.key_tcp_server_active_preference), false);
+
+        if (ognService != null) {
+            if (active) {
+                ognService.startLocationUpdates(this);
+            } else {
+                ognService.stopLocationUpdates();
+            }
+        }
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -351,25 +359,78 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
             String aprsFilter = sharedPreferences.getString(getString(R.string.key_aprsfilter_preference), "");
             if (aprsFilter.equals("")) {
-                // TODO: refactor to use fused location provider and request permissions!
-                LocationManager locManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-                if (locManager != null) {
-                    try {
-                        Location location = locManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-                        if (location != null) {
-                            aprsFilter = AprsFilterManager.latLngToAprsFilter(location.getLatitude(), location.getLongitude());
-                        }
-                    } catch (SecurityException se) {
-                        // accessing location is forbidden
-                    }
-                }
-                editEmptyAprsFilter(aprsFilter);
-
+                createFilterFromCurrentLocation();
             } else {
                 startService(new Intent(getBaseContext(), OgnService.class));
             }
         }
     }
+
+    private void createFilterFromCurrentLocation() {
+        final String coarseLocationPermissionString = Manifest.permission.ACCESS_COARSE_LOCATION;
+
+        if (ContextCompat.checkSelfPermission(getApplicationContext(), coarseLocationPermissionString) != PackageManager.PERMISSION_GRANTED) {
+            final int REQUEST_CODE = 2468; // TODO: extract this constant
+            ActivityCompat.requestPermissions(this, new String[]{coarseLocationPermissionString}, REQUEST_CODE);
+        } else {
+            // Permission has already been granted
+            Timber.d("Location permisson granted");
+            final LocationRequest locationRequest;
+
+            long UPDATE_INTERVAL = 1000; /* 1 secs */
+            long MAX_WAIT_TIME = 2000; /* 2 secs */
+            long EXPIRE_TIME = 3000;  /* 3 secs */
+
+            // Create the location request to start receiving updates
+            locationRequest = new LocationRequest();
+            locationRequest.setPriority(LocationRequest.PRIORITY_LOW_POWER);
+            locationRequest.setInterval(UPDATE_INTERVAL);
+            locationRequest.setMaxWaitTime(MAX_WAIT_TIME);
+            locationRequest.setExpirationDuration(EXPIRE_TIME);
+            locationRequest.setNumUpdates(1); //update only once
+
+            // Create LocationSettingsRequest object using location request
+            LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder();
+            builder.addLocationRequest(locationRequest);
+            LocationSettingsRequest locationSettingsRequest = builder.build();
+
+            // Check whether location settings are satisfied
+            // https://developers.google.com/android/reference/com/google/android/gms/location/SettingsClient
+            SettingsClient settingsClient = LocationServices.getSettingsClient(getApplicationContext());
+            settingsClient.checkLocationSettings(locationSettingsRequest);
+
+            emptyFilterTimer = new CountDownTimer(EXPIRE_TIME, 1000) {
+
+                @Override
+                public void onTick(long millisUntilFinished) {
+                    // do nothing
+                }
+
+                @Override
+                public void onFinish() {
+                    // location update timed out
+                    editEmptyAprsFilter("");
+                }
+            }.start();
+
+            LocationServices.getFusedLocationProviderClient(getApplicationContext()).requestLocationUpdates(locationRequest, new LocationCallback() {
+                        @Override
+                        public void onLocationResult(LocationResult locationResult) {
+                            if (emptyFilterTimer != null) {
+                                emptyFilterTimer.cancel();
+                            }
+                            Location location = locationResult.getLastLocation();
+                            String aprsFilter = "";
+                            if (location != null) {
+                                aprsFilter = AprsFilterManager.latLngToAprsFilter(location.getLatitude(), location.getLongitude());
+                            }
+                            editEmptyAprsFilter(aprsFilter);
+                        }
+                    },
+                    Looper.myLooper());
+        }
+    }
+
 
     private void updateReceiverBeaconMarker(ReceiverBundle bundle) {
         ReceiverBeacon beacon = bundle.receiverBeacon;
@@ -754,7 +815,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     protected void onResume() {
         super.onResume();
-        //service must always be rebinded, even if ognService != null
+        //service must always be reconnected, even if ognService != null
         bindService(new Intent(this, OgnService.class), mConnection, Context.BIND_AUTO_CREATE);
 
         checkSetUpMap();
@@ -994,7 +1055,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) {
         if (mMap != null) {
-            //second call of onMapReady TODO: find out why it is called two times! 2018-01-27
+            //second call of onMapReady
             //it is called in onCreate and onResume, check if one call is enough 2018-02-11
             //mMap is already set
             //maybe good time to reload markers?

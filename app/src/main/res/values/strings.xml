@@ -82,19 +82,24 @@
     <string name="summary_shownotactive_preference">on</string>
 
     <string name="key_altitude_unit_preference">altitude_preference</string>
-    <string name="title_altitude_unit_preference">Altitude Unit</string>
-    <string name="summary_altitude_unit_preference">Altitude Unit</string>
-    <string name="dialog_title_altitude_unit_preference">Altitude Unit</string>
+    <string name="title_altitude_unit_preference">Altitude</string>
+    <string name="summary_altitude_unit_preference">Altitude</string>
+    <string name="dialog_title_altitude_unit_preference">Altitude</string>
 
     <string name="key_groundspeed_unit_preference">groundspeed_preference</string>
-    <string name="title_groundspeed_unit_preference">Ground Speed Unit</string>
-    <string name="summary_groundspeed_unit_preference">Ground Speed Unit</string>
-    <string name="dialog_title_groundspeed_unit_preference">Ground Speed Unit</string>
+    <string name="title_groundspeed_unit_preference">Ground Speed</string>
+    <string name="summary_groundspeed_unit_preference">Ground Speed</string>
+    <string name="dialog_title_groundspeed_unit_preference">Ground Speed</string>
 
     <string name="key_verticalspeed_unit_preference">verticalspeed_preference</string>
-    <string name="title_verticalspeed_unit_preference">Vertical Speed Unit</string>
-    <string name="summary_verticalspeed_unit_preference">Vertical Speed Unit</string>
-    <string name="dialog_title_verticalspeed_unit_preference">Vertical Speed Unit</string>
+    <string name="title_verticalspeed_unit_preference">Vertical Speed</string>
+    <string name="summary_verticalspeed_unit_preference">Vertical Speed</string>
+    <string name="dialog_title_verticalspeed_unit_preference">Vertical Speed</string>
+
+    <string name="key_tcp_server_active_preference">tcp_server_preference</string>
+    <string name="title_tcp_server_active_preference">TCP Server</string>
+    <string name="summary_tcp_server_active_preference">TCP Server</string>
+    <string name="dialog_title_tcp_server_active_preference">TCP Server</string>
 
     <!-- Entry keys and values of arrays -->
     <string name="terrain">Terrain</string>
