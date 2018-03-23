@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.preference.CheckBoxPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.preference.SwitchPreference;
@@ -14,6 +13,7 @@ import android.support.v4.content.ContextCompat;
 
 import com.meisterschueler.ognviewer.OgnService;
 import com.meisterschueler.ognviewer.R;
+import com.meisterschueler.ognviewer.common.AppConstants;
 
 import timber.log.Timber;
 
@@ -66,7 +66,7 @@ public class PrefsFragment extends PreferenceFragment implements SharedPreferenc
             if (value) {
                 requestLocationPermission();
             } else {
-                //TODO: stop tcp server
+                // TCP updates will be stopped when switched back to MapsActivity
             }
         }
     }
@@ -168,8 +168,7 @@ public class PrefsFragment extends PreferenceFragment implements SharedPreferenc
         final String fineLocationPermissionString = Manifest.permission.ACCESS_FINE_LOCATION;
 
         if (ContextCompat.checkSelfPermission(getActivity(), fineLocationPermissionString) != PackageManager.PERMISSION_GRANTED) {
-            final int REQUEST_CODE = 1122334455; // TODO: extract this constant
-            ActivityCompat.requestPermissions(getActivity(), new String[]{fineLocationPermissionString}, REQUEST_CODE);
+            ActivityCompat.requestPermissions(getActivity(), new String[]{fineLocationPermissionString}, AppConstants.REQUEST_CODE_LOCATION_TCP_UPDATES);
         } else {
             // Permission has already been granted
             Timber.d("Location permisson granted");

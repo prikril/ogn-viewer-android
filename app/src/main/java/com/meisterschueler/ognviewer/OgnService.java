@@ -31,6 +31,7 @@ import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.SettingsClient;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
+import com.meisterschueler.ognviewer.common.AppConstants;
 import com.meisterschueler.ognviewer.common.FlarmMessage;
 import com.meisterschueler.ognviewer.common.ReceiverBeaconImplReplacement;
 import com.meisterschueler.ognviewer.common.ReceiverBundle;
@@ -62,26 +63,26 @@ import timber.log.Timber;
 
 public class OgnService extends Service implements AircraftBeaconListener, ReceiverBeaconListener {
 
-    private static final String TAG = "OgnService";
-
-    TcpServer tcpServer;
+    private TcpServer tcpServer;
 
     private OgnClient ognClient; //initialized in onStartCommand
     private boolean ognConnected = false; //is true, when service was started (onStartCommand)
-    LocalBroadcastManager localBroadcastManager;
-    IBinder binder = new LocalBinder();
-    //Map<String, AircraftBundle> aircraftMap = new ConcurrentHashMap<>(); // for WIP 2018-03-19
-    private Map<String, Aircraft> aircraftMap = new HashMap<>(); //TODO: von dominik, entfernen? 2017-11-02
+    private LocalBroadcastManager localBroadcastManager;
+    private IBinder binder = new LocalBinder();
+    //Map<String, AircraftBundle> aircraftMap = new ConcurrentHashMap<>(); // for WIP 2017-11-02
+    private Map<String, Aircraft> aircraftMap = new HashMap<>();
 
-    int maxAircraftCounter = 0;
-    int maxBeaconCounter = 0;
+    private int maxAircraftCounter = 0;
+    private int maxBeaconCounter = 0;
     Map<String, ReceiverBundle> receiverBundleMap = new ConcurrentHashMap<>();
     Map<String, AircraftBundle> aircraftBundleMap = new ConcurrentHashMap<>();
 
     private ScheduledExecutorService scheduledTaskExecutor;
     private boolean refreshingActive = false; // if true, markers on map should be updated
     private boolean mapCurrentlyUpdating = false; // if true, the map is currently updating (new updates should wait)
-    private int aircraftTimeoutInSec = 300; //TODO: extract default value;
+    private boolean timerCurrentlyRunning = false;
+    private LatLngBounds latLngBounds = new LatLngBounds(new LatLng(0, 0), new LatLng(0, 0));
+    private int aircraftTimeoutInSec = AppConstants.DEFAULT_AIRCRAFT_TIMEOUT_IN_SEC;
     private boolean locationUpdatesAlreadyRequested = false;
     private FusedLocationProviderClient fusedLocationProviderClient;
     private LocationCallback locationCallback;
@@ -94,7 +95,7 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
         aircraftTimeoutInSec = timoutInSec;
     }
 
-    public interface UpdateListener {
+    public interface UpdateListener { // for WIP 2017-11-02
         public void updateAircraftBundle(AircraftBundle bundle);
     }
 
@@ -142,13 +143,13 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
                 // this thread waiting for the user's response! After the user
                 // sees the explanation, try again to request the permission.
                 Timber.d("Location permisson already denied");
-                // ask again? in activity?
+                // ask again? in activity? 2018-03-23
                 // onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults)
                 // https://developer.android.com/training/permissions/requesting.html#java
             } else {
                 // User was never asked to allow location updates. Ask now!
-                final int REQUEST_CODE = 1234; // TODO: extract this constant
-                ActivityCompat.requestPermissions(activity, new String[]{fineLocationPermissionString, coarseLocationPermissionString}, REQUEST_CODE);
+                ActivityCompat.requestPermissions(activity, new String[]{fineLocationPermissionString, coarseLocationPermissionString},
+                        AppConstants.REQUEST_CODE_LOCATION_TCP_UPDATES_FROM_SERVICE);
             }
             return;
         } else {
@@ -334,7 +335,6 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
     public void onCreate() {
         super.onCreate();
 
-        //RushCore.initialize(new AndroidInitializeConfig(getApplicationContext()));
         List<Class<? extends Rush>> classes = new ArrayList<>();
         classes.add(CustomAircraftDescriptor.class);
         AndroidInitializeConfig config = new AndroidInitializeConfig(getApplicationContext());
@@ -454,9 +454,6 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
 
     }
 
-    boolean timerCurrentlyRunning = false;
-    LatLngBounds latLngBounds = new LatLngBounds(new LatLng(0, 0), new LatLng(0, 0));
-
     public void resumeUpdatingMap(LatLngBounds latLngBounds) {
         this.latLngBounds = latLngBounds;
         refreshingActive = true;
@@ -476,7 +473,7 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
         scheduledTaskExecutor.scheduleWithFixedDelay(new Runnable() {
             @Override
             public void run() {
-                //TODO: add try catches
+                //TODO: add try catches (for WIP 2017-11-05)
                 if (timerCurrentlyRunning) {
                     Timber.wtf("Two or more timers active!");
                     return; //Should never happen! If this happens, two timers are active.

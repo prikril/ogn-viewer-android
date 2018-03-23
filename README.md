@@ -1,4 +1,4 @@
-# OGN Viewer
+# OGN Viewer - FLARM Radar
 
 ## Description
 Android app that visualizes the aircraft traffic from [The Open Glider Network project (OGN)](http://glidernet.org) on a map.
@@ -7,7 +7,9 @@ OGN can receive signals from gliders, tow planes, helicopters, etc.
 
 This app is a flight radar for small aircraft with FLARM equipment.
 
-Current version: 1.3.5
+The decoded signals can be used with apps like XCSoar on TCP Port 4353.
+
+Current version: 1.3.6
 
 See [release notes](release-notes.md) for details.
 

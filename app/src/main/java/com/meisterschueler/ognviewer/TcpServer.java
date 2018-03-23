@@ -3,6 +3,7 @@ package com.meisterschueler.ognviewer;
 
 import android.location.Location;
 
+import com.meisterschueler.ognviewer.common.AppConstants;
 import com.meisterschueler.ognviewer.common.FlarmMessage;
 import com.meisterschueler.ognviewer.common.FlarmMessageSenderTask;
 
@@ -25,7 +26,7 @@ public class TcpServer {
             @Override
             public void run() {
                 try {
-                    serverSocket = new ServerSocket(4353);
+                    serverSocket = new ServerSocket(AppConstants.TCP_SERVER_PORT);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

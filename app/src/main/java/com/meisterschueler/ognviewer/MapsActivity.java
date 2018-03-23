@@ -53,6 +53,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.maps.android.ui.IconGenerator;
+import com.meisterschueler.ognviewer.common.AppConstants;
 import com.meisterschueler.ognviewer.common.ReceiverBundle;
 import com.meisterschueler.ognviewer.common.Utils;
 
@@ -121,7 +122,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         return true;
     }
 
-    final int OPTION_SETTINGS = 2;
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -131,7 +131,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         switch (id) {
             case R.id.action_settings:
                 Intent i = new Intent(this, PrefsActivity.class);
-                startActivityForResult(i, OPTION_SETTINGS);
+                startActivityForResult(i, AppConstants.ACTIVITY_REQUEST_CODE_SETTINGS);
                 break;
             case R.id.action_manageids:
                 Intent i2 = new Intent(this, ManageIDsActivity.class);
@@ -171,7 +171,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     protected void onActivityResult(int requestCode, int resultCode, Intent data)
     {
         super.onActivityResult(requestCode, resultCode, data);
-        if(requestCode == OPTION_SETTINGS)
+        if(requestCode == AppConstants.ACTIVITY_REQUEST_CODE_SETTINGS)
         {
             //aprs filter
             //String message = data.getStringExtra("MESSAGE"); //leave this for future usage
@@ -183,12 +183,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             changeMapType();
 
             changeKeepScreenOn();
-            changeAircraftTimeout(); //will not work here, because ognService connects async
+            changeAircraftTimeout(); // WARNING: will not work here, because ognService connects async
 
             //receivers
             Boolean showreceivers = sharedPreferences.getBoolean(getString(R.string.key_showreceivers_preference), true);
             // receiverMarkerMap should always be empty with current implementation 2018-02-26
-            for (Marker m : receiverMarkerMap.values()) { //this is not slow!
+            for (Marker m : receiverMarkerMap.values()) { // this is not slow!
                 m.setVisible(showreceivers);
             }
             Timber.d("applied changed options");
@@ -199,8 +199,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         final String coarseLocationPermissionString = Manifest.permission.ACCESS_COARSE_LOCATION;
 
         if (ContextCompat.checkSelfPermission(getApplicationContext(), coarseLocationPermissionString) != PackageManager.PERMISSION_GRANTED) {
-            final int REQUEST_CODE = 54321; // TODO: extract this constant
-            ActivityCompat.requestPermissions(this, new String[]{coarseLocationPermissionString}, REQUEST_CODE);
+            ActivityCompat.requestPermissions(this, new String[]{coarseLocationPermissionString}, AppConstants.REQUEST_CODE_LOCATION_ZOOM);
         } else {
             // Permission has already been granted
             Timber.d("Location permisson granted");
@@ -236,7 +235,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                                 CameraPosition cameraPosition = new CameraPosition.Builder()
                                         .target(latLng)
-                                        .zoom(7) // TODO: extract to constants or make user defined
+                                        .zoom(AppConstants.DEFAULT_MAP_ZOOM)
                                         .build();
                                 mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
                             }
@@ -249,10 +248,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
-        final int REQUEST_CODE = 54321; // TODO: extract this constant
-        final int EMPTY_FILTER_REQUEST_CODE = 2468; // TODO: extract this constant
         switch (requestCode) {
-            case REQUEST_CODE: {
+            case AppConstants.REQUEST_CODE_LOCATION_ZOOM: {
                 // If request is cancelled, the result arrays are empty.
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
@@ -264,7 +261,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 }
                 break;
             }
-            case EMPTY_FILTER_REQUEST_CODE: {
+            case AppConstants.REQUEST_CODE_LOCATION_FILTER: {
                 // If request is cancelled, the result arrays are empty.
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
@@ -308,7 +305,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private void changeAircraftTimeout() {
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         String timeout = sharedPreferences.getString(getString(R.string.key_aircraft_timeout_preference), getString(R.string.time_5m));
-        int timoutInSec = 300; //TODO: extract default value
+        int timoutInSec = AppConstants.DEFAULT_AIRCRAFT_TIMEOUT_IN_SEC;
         if (timeout.equals(getString(R.string.time_30s))) {
             timoutInSec = 30;
         } else if (timeout.equals(getString(R.string.time_1m))){
@@ -370,8 +367,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         final String coarseLocationPermissionString = Manifest.permission.ACCESS_COARSE_LOCATION;
 
         if (ContextCompat.checkSelfPermission(getApplicationContext(), coarseLocationPermissionString) != PackageManager.PERMISSION_GRANTED) {
-            final int REQUEST_CODE = 2468; // TODO: extract this constant
-            ActivityCompat.requestPermissions(this, new String[]{coarseLocationPermissionString}, REQUEST_CODE);
+            ActivityCompat.requestPermissions(this, new String[]{coarseLocationPermissionString}, AppConstants.REQUEST_CODE_LOCATION_FILTER);
         } else {
             // Permission has already been granted
             Timber.d("Location permisson granted");
@@ -588,8 +584,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         Boolean rotateAircraft = sharedPreferences.getBoolean(getString(R.string.key_rotate_aircraft_preference), false);
         if (rotateAircraft) {
             m.setRotation(track + 180); //with 180 the pin shows to north on 0 degree from track
+            if (track < 90 || track > 270) { // info window must not hide aircraft marker
+                m.setInfoWindowAnchor(0.5f, 1f); // bottom middle
+            } else {
+                m.setInfoWindowAnchor(0.5f, 0f); // top middle
+            }
         } else {
-            m.setRotation(0); //default, to reset alredy rotated markers
+            m.setRotation(0); // default, to reset already rotated markers
+            m.setInfoWindowAnchor(0.5f, 0f); // top middle
         }
 
         String colorisation = sharedPreferences.getString(getString(R.string.key_aircraft_colorisation_preference), getString(R.string.altitude));

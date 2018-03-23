@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 
+import com.meisterschueler.ognviewer.common.AppConstants;
 import com.meisterschueler.ognviewer.ui.PrefsFragment;
 
 import timber.log.Timber;
@@ -22,29 +23,22 @@ public class PrefsActivity extends Activity {
 
         Intent intent = new Intent();
         intent.putExtra("MESSAGE","Prefs Activity finished");
-        setResult(2, intent); //TODO: replace 2 with constant
+        setResult(AppConstants.ACTIVITY_REQUEST_CODE_SETTINGS, intent);
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
-        final int REQUEST_CODE = 1122334455; // TODO: extract this constant
         switch (requestCode) {
-            case REQUEST_CODE: {
+            case AppConstants.REQUEST_CODE_LOCATION_TCP_UPDATES: {
                 // If request is cancelled, the result arrays are empty.
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-
-                    // permission was granted, yay! Do the
-                    // contacts-related task you need to do.
                     prefsFragment.setTCPServerActiveState(true);
                 } else {
-                    // permission denied, boo! Disable the
-                    // functionality that depends on this permission.
-                    // Toast.makeText(getApplicationContext(), R.string.empty_aprs_filter_toast, Toast.LENGTH_LONG).show();
                     Timber.d("Location permission for TCP Server denied");
                     prefsFragment.setTCPServerActiveState(false);
                 }
-                return;
+                break;
             }
 
             // other 'case' lines to check for other

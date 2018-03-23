@@ -1,14 +1,21 @@
 # OGN Viewer Release Notes
 
+## 1.3.6
+* Fixed: GPS issues
+* Fixed: inactive aircraft timer issue - Please readjust your timeout setting!
+* Fixed: info window could hide aircraft marker when aircraft rotated
+* New: units can be changed
+* New: TCP server updates on/off setting
+
 ## 1.3.5
-* Fixed: Notification not visible on Android 7 and up
-* Fixed: App crash at start on Android 8.1
+* Fixed: notification not visible on Android 7 and up
+* Fixed: app crash at start on Android 8.1
 
 ## 1.3.4
 * Fixed: bugs from receiver markers
 * Fixed: OutOfMemory error with many markers
 * Fixed: wrong behaviour with empty filter
-* New: Info window shows time of last signal from aircraft and receivers
+* New: info window shows time of last signal from aircraft and receivers
 * New: user defined timeout for inactive aircraft
 * New: user defined keep screen on function
 * Known issue: GPS function doesn't work on all devices
