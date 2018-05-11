@@ -237,7 +237,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                         .target(latLng)
                                         .zoom(AppConstants.DEFAULT_MAP_ZOOM)
                                         .build();
-                                mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+                                if (mMap != null) {
+                                    mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+                                }
                             }
 
                         }
@@ -1001,7 +1003,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         final EditText et = view.findViewById(R.id.editTextOwner);
         et.setText(aprsFilter);
 
-        new AlertDialog.Builder(this).setView(view)
+        new AlertDialog.Builder(MapsActivity.this).setView(view)
                 .setTitle(R.string.aprs_filter_title)
                 .setMessage(R.string.empty_aprs_filter_message)
                 .setCancelable(false)
