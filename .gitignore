@@ -1,3 +1,4 @@
+
 # Created by https://www.gitignore.io/api/androidstudio
 
 ### AndroidStudio ###
@@ -62,7 +63,9 @@ obj/
 /out/
 
 # User-specific configurations
+.idea/caches/
 .idea/libraries/
+.idea/shelf/
 .idea/workspace.xml
 .idea/tasks.xml
 .idea/.name
@@ -93,6 +96,8 @@ Thumbs.db
 # Legacy Eclipse project files
 .classpath
 .project
+.cproject
+.settings/
 
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
@@ -124,5 +129,6 @@ fabric.properties
 ### AndroidStudio Patch ###
 
 !/gradle/wrapper/gradle-wrapper.jar
+
 
 # End of https://www.gitignore.io/api/androidstudio

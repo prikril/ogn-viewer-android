@@ -21,15 +21,15 @@ android {
 }
 
 dependencies {
-    compile fileTree(include: ['*.jar'], dir: 'libs')
-    compile 'com.google.android.gms:play-services-maps:11.8.0'
-    compile 'com.google.android.gms:play-services-location:11.8.0'
-    compile 'org.ogn:ogn-commons-java:2.0.0-SNAPSHOT'
-    compile 'org.ogn:ogn-client-java:1.0.0-SNAPSHOT'
-    compile 'com.google.maps.android:android-maps-utils:0.5'
-    compile "com.android.support:support-v4:27.1.0"
-    compile 'co.uk.rushorm:rushandroid:1.2.0'
-    testCompile 'junit:junit:4.12'
-    testCompile 'org.robolectric:robolectric:3.4.2'
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation 'com.google.android.gms:play-services-maps:11.8.0'
+    implementation 'com.google.android.gms:play-services-location:11.8.0'
+    implementation 'org.ogn:ogn-commons-java:2.0.0-SNAPSHOT'
+    implementation 'org.ogn:ogn-client-java:1.0.0-SNAPSHOT'
+    implementation 'com.google.maps.android:android-maps-utils:0.5'
+    implementation "com.android.support:support-v4:27.1.1"
+    implementation 'co.uk.rushorm:rushandroid:1.2.0'
+    testImplementation 'junit:junit:4.12'
+    testImplementation 'org.robolectric:robolectric:3.4.2'
     implementation 'com.jakewharton.timber:timber:4.6.0'
 }
