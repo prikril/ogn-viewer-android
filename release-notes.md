@@ -1,5 +1,8 @@
 # OGN Viewer Release Notes
 
+## 1.3.7
+* Fixed: small bugs (issue #10 and #11)
+
 ## 1.3.6
 * Fixed: GPS issues
 * Fixed: inactive aircraft timer issue - Please readjust your timeout setting!
