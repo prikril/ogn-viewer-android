@@ -22,13 +22,13 @@ android {
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
-    implementation 'com.google.android.gms:play-services-maps:11.8.0'
-    implementation 'com.google.android.gms:play-services-location:11.8.0'
+    implementation 'com.google.android.gms:play-services-maps:15.0.1'
+    implementation 'com.google.android.gms:play-services-location:15.0.1'
     implementation 'org.ogn:ogn-commons-java:2.0.0-SNAPSHOT'
     implementation 'org.ogn:ogn-client-java:1.0.0-SNAPSHOT'
     implementation 'com.google.maps.android:android-maps-utils:0.5'
     implementation "com.android.support:support-v4:27.1.1"
-    implementation 'co.uk.rushorm:rushandroid:1.2.0'
+    implementation 'co.uk.rushorm:rushandroid:1.2.0' // leave at 1.2.0 to avoid issues 2018-05-15
     testImplementation 'junit:junit:4.12'
     testImplementation 'org.robolectric:robolectric:3.4.2'
     implementation 'com.jakewharton.timber:timber:4.6.0'
