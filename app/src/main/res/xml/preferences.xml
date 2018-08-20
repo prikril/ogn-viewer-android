@@ -71,6 +71,12 @@
             android:summary="@string/summary_rotate_aircraft_preference"
             android:defaultValue="false"/>
 
+        <CheckBoxPreference
+            android:key="@string/key_flightpath_aircraft_preference"
+            android:title="@string/title_flightpath_aircraft_preference"
+            android:summary="@string/summary_flightpath_aircraft_preference"
+            android:defaultValue="false"/>
+
         <ListPreference
             android:key="@string/key_aircraft_colorisation_preference"
             android:title="@string/title_colorisation_preference"

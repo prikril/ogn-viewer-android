@@ -352,6 +352,11 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
 
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, new Intent(this, MapsActivity.class), 0);
 
+        Intent exitIntent = new Intent(this, ClosingActivity.class);
+        exitIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        exitIntent.putExtra("EXIT", true);
+        PendingIntent pendingExitIntent = PendingIntent.getActivity(this, 1, exitIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
         String CHANNEL_ID = "com.meisterschueler.ognviewer.background";
         String CHANNEL_NAME = "OGN in background";
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
@@ -363,6 +368,7 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
                 .setContentTitle("OGN Viewer")
                 .setContentText("Version " + versionName)
                 .setContentIntent(pendingIntent)
+                .addAction(R.drawable.ic_stat, "Stop", pendingExitIntent)
                 .build();
 
         startForeground(R.string.notification_id, notification);

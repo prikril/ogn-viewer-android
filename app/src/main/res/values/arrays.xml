@@ -4,12 +4,16 @@
         <item>@string/terrain</item>
         <item>@string/hybrid</item>
         <item>@string/satellite</item>
+        <item>@string/map_none</item>
+        <item>@string/map_normal</item>
     </string-array>
 
     <string-array name="entryvalues_map_type_preference">
         <item>@string/terrain</item>
         <item>@string/hybrid</item>
         <item>@string/satellite</item>
+        <item>@string/map_none</item>
+        <item>@string/map_normal</item>
     </string-array>
 
     <string-array name="entries_aircraft_colorisation_preference">
