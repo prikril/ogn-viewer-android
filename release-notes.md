@@ -1,5 +1,9 @@
 # OGN Viewer Release Notes
 
+## 1.3.8
+* New: flight paths of aircraft (must be enabled in settings)
+* New: (emergency) stop button at notification
+
 ## 1.3.7
 * Fixed: small bugs (issue #10 and #11)
 

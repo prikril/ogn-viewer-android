@@ -15,7 +15,8 @@
         android:layout_height="wrap_content"
         android:id="@+id/editTextRegId"
         android:layout_gravity="center_horizontal"
-        android:hint="@string/empty_registration_number" />
+        android:hint="@string/empty_registration_number"
+        android:inputType="textCapCharacters" />
 
     <EditText
         android:layout_width="match_parent"

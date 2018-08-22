@@ -9,20 +9,20 @@ This app is a flight radar for small aircraft with FLARM equipment.
 
 The decoded signals can be used with apps like XCSoar on TCP Port 4353.
 
-Current version: 1.3.7
+Current version: 1.3.8
 
 See [release notes](release-notes.md) for details.
 
 Download the app at https://play.google.com/store/apps/details?id=com.meisterschueler.ognviewer
 
 ## Dependencies
-The app uses two repositories from glidernet:
+The app uses two repositories from Meisterschueler:
 
-https://github.com/glidernet/ogn-commons-java
+https://github.com/Meisterschueler/ogn-commons-java
 
 and
 
-https://github.com/glidernet/ogn-client-java
+https://github.com/Meisterschueler/ogn-client-java
 
 Clone the Java7 files from "Android" branch!
 
