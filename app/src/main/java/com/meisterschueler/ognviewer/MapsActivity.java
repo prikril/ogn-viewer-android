@@ -93,6 +93,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private BroadcastReceiver receiverReceiver;
     private BroadcastReceiver actionReceiver;
     private Map<String, Marker> aircraftMarkerMap = new HashMap<>();
+    private Map<String, String> aircraftMarkerAddressMap = new HashMap<>(); // marker id to aircraft address
     private Map<String, Marker> receiverMarkerMap = new HashMap<>();
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
     private boolean ognServiceConnected = false;
@@ -583,16 +584,19 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         if (!aircraftMarkerMap.containsKey(address)) {
             if (mMap == null) {
                 return; //happens when orientation changes
-            } else {
-                m = mMap.addMarker(new MarkerOptions().position(new LatLng(lat, lon)));
             }
+
+            m = mMap.addMarker(new MarkerOptions().position(new LatLng(lat, lon)));
+
             aircraftMarkerMap.put(address, m);
+            aircraftMarkerAddressMap.put(m.getId(), address);
         } else {
             m = aircraftMarkerMap.get(address);
 
             infoWindowShown = m.isInfoWindowShown();
             m.setPosition(new LatLng(lat, lon));
         }
+
         Boolean rotateAircraft = sharedPreferences.getBoolean(getString(R.string.key_rotate_aircraft_preference), false);
         if (rotateAircraft) {
             m.setRotation(track + 180); //with 180 the pin shows to north on 0 degree from track
@@ -776,6 +780,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 //already removed? continue
                 return;
             }
+            aircraftMarkerAddressMap.remove(m.getId());
             m.remove(); //remove marker from mMap
             aircraftMarkerMap.remove(address); //maybe a problem if at same time .add in updateAircraft()? 2018-02-09
         }
@@ -812,6 +817,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         rangeCircle = null;
         flightPathLine = null;
         aircraftMarkerMap.clear();
+        aircraftMarkerAddressMap.clear();
         receiverMarkerMap.clear();
     }
 
@@ -961,15 +967,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 if (receiverMarkerMap.containsValue(marker)) {
                     return; //Don't show a dialog when info window of a receiver is clicked.
                 }
-                String address = "";
-                for (Map.Entry<String, Marker> entry : aircraftMarkerMap.entrySet()) {
-                    if (entry.getValue().equals(marker)) {
-                        address = entry.getKey();
-                        break;
-                    }
+
+                String markerId = marker.getId();
+                if(aircraftMarkerAddressMap.containsKey(markerId)) {
+                    String address = aircraftMarkerAddressMap.get(markerId);
+                    AircraftDialog.showDialog(MapsActivity.this, address);
                 }
 
-                AircraftDialog.showDialog(MapsActivity.this, address);
             }
         });
 
@@ -1195,17 +1199,20 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         Boolean showFlightPath = sharedPreferences.getBoolean(getString(R.string.key_flightpath_aircraft_preference), false);
 
-        if (showFlightPath && aircraftMarkerMap.containsValue(marker)) {
-            for (String address : aircraftMarkerMap.keySet()) {
-                if (aircraftMarkerMap.get(address).equals(marker)) {
-                    getFlightPath(address);
-                    break;
-                }
-            }
+        String markerId = marker.getId();
+
+        if (showFlightPath && aircraftMarkerAddressMap.containsKey(markerId)) {
+            String address = aircraftMarkerAddressMap.get(markerId);
+            getFlightPath(address);
         }
     }
 
     private void getFlightPath(String address) {
+        if(address == null) {
+            removeFlightPathLine();
+            return;
+        }
+
         Gson gson = new GsonBuilder().create();
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(AppConstants.FLIGHTPATH_API_BASE_URL)
@@ -1232,6 +1239,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void paintFlightPath(FlightPath flightPath) {
         if (mMap != null & flightPath != null) {
             PolylineOptions polylineOptions = new PolylineOptions();
+
+            if(flightPath.getPositions() == null) {
+                removeFlightPathLine();
+                return;
+            }
+
             for (AircraftPosition position : flightPath.getPositions()) {
                 polylineOptions.add(new LatLng(position.getLatitude(), position.getLongitude()));
             }
