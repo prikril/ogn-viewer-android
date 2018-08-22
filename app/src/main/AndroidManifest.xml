@@ -38,6 +38,10 @@
             android:name=".ManageIDsActivity"
             android:label="Manage IDs">
         </activity>
+        <activity
+            android:name=".ClosingActivity"
+            android:label="Closing App">
+        </activity>
 
         <!-- Updating this will cause a database upgrade -->
         <meta-data

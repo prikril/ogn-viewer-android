@@ -23,5 +23,14 @@ public class AppConstants {
      */
     public static final int ACTIVITY_REQUEST_CODE_SETTINGS = 2000;
 
+    /**
+     * TCP port for other apps to connect
+     */
     public static final int TCP_SERVER_PORT = 4353;
+
+    /**
+     * REST API base url for flightpath
+     */
+    public static final String FLIGHTPATH_API_BASE_URL = "http://dominik-p.de:18820/api/";
+
 }

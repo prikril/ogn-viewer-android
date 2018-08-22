@@ -52,10 +52,18 @@ import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.maps.android.ui.IconGenerator;
+import com.meisterschueler.ognviewer.activity.KillBroadcastReceiver;
 import com.meisterschueler.ognviewer.common.AppConstants;
 import com.meisterschueler.ognviewer.common.ReceiverBundle;
 import com.meisterschueler.ognviewer.common.Utils;
+import com.meisterschueler.ognviewer.network.flightpath.AircraftPosition;
+import com.meisterschueler.ognviewer.network.flightpath.FlightPath;
+import com.meisterschueler.ognviewer.network.flightpath.FlightPathApi;
 
 import org.ogn.commons.beacon.AircraftBeacon;
 import org.ogn.commons.beacon.AircraftDescriptor;
@@ -67,6 +75,11 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 import timber.log.Timber;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback,
@@ -80,11 +93,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private BroadcastReceiver receiverReceiver;
     private BroadcastReceiver actionReceiver;
     private Map<String, Marker> aircraftMarkerMap = new HashMap<>();
+    private Map<String, String> aircraftMarkerAddressMap = new HashMap<>(); // marker id to aircraft address
     private Map<String, Marker> receiverMarkerMap = new HashMap<>();
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
     private boolean ognServiceConnected = false;
     private boolean mapLoaded = false;
     private CountDownTimer emptyFilterTimer;
+
+    private Polyline flightPathLine;
+    private KillBroadcastReceiver killBroadcastReceiver;
 
     private ServiceConnection mConnection = new ServiceConnection() {
         public void onServiceConnected(ComponentName className, IBinder binder) {
@@ -104,24 +121,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     };
 
-    private void updateKnownAircrafts(final Map<String, AircraftBundle> aircraftMap) {
-        for (final AircraftBundle bundle : aircraftMap.values()) {
-            updateAircraftBeaconMarker(bundle);
-        }
-    }
-
-    private void updateKnownReceivers(final Map<String, ReceiverBundle> receiverMap) {
-        for (final ReceiverBundle bundle : receiverMap.values()) {
-            updateReceiverBeaconMarker(bundle);
-        }
-    }
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main_menu, menu);
         return true;
     }
-
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -287,6 +291,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         if (mMap != null) {
             if (mapType.equals(getString(R.string.hybrid))) {
                 mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
+            } else if (mapType.equals(getString(R.string.map_none))) {
+                mMap.setMapType(GoogleMap.MAP_TYPE_NONE);
+            } else if (mapType.equals(getString(R.string.map_normal))) {
+                    mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
             } else if (mapType.equals(getString(R.string.satellite))) {
                 mMap.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
             } else {
@@ -344,6 +352,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        killBroadcastReceiver = new KillBroadcastReceiver(this);
+        registerReceiver(killBroadcastReceiver, new IntentFilter("EMERGENCY_EXIT"));
 
         setContentView(R.layout.fragment_maps);
         if (BuildConfig.DEBUG) {
@@ -573,16 +584,19 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         if (!aircraftMarkerMap.containsKey(address)) {
             if (mMap == null) {
                 return; //happens when orientation changes
-            } else {
-                m = mMap.addMarker(new MarkerOptions().position(new LatLng(lat, lon)));
             }
+
+            m = mMap.addMarker(new MarkerOptions().position(new LatLng(lat, lon)));
+
             aircraftMarkerMap.put(address, m);
+            aircraftMarkerAddressMap.put(m.getId(), address);
         } else {
             m = aircraftMarkerMap.get(address);
 
             infoWindowShown = m.isInfoWindowShown();
             m.setPosition(new LatLng(lat, lon));
         }
+
         Boolean rotateAircraft = sharedPreferences.getBoolean(getString(R.string.key_rotate_aircraft_preference), false);
         if (rotateAircraft) {
             m.setRotation(track + 180); //with 180 the pin shows to north on 0 degree from track
@@ -734,7 +748,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             iconGenerator.setContentPadding(0, 0, 0, 0);
             Bitmap icon = iconGenerator.makeIcon(title);
 
-            int iconMinSize = 72;   // sufficient for "808"
+            int iconMinSize = 85;   // sufficient for "808"
             int delta = Math.max(0, iconMinSize - icon.getWidth());
             iconGenerator.setContentPadding(delta / 2, 0, delta / 2, 0);
             iconGenerator.setColor(Color.HSVToColor(new float[]{hue, 255, 255}));
@@ -766,6 +780,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 //already removed? continue
                 return;
             }
+            aircraftMarkerAddressMap.remove(m.getId());
             m.remove(); //remove marker from mMap
             aircraftMarkerMap.remove(address); //maybe a problem if at same time .add in updateAircraft()? 2018-02-09
         }
@@ -800,7 +815,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
         //additional speedup for onResume
         rangeCircle = null;
+        flightPathLine = null;
         aircraftMarkerMap.clear();
+        aircraftMarkerAddressMap.clear();
         receiverMarkerMap.clear();
     }
 
@@ -813,12 +830,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     protected void onDestroy() {
         super.onDestroy();
         mapLoaded = false;
+        unregisterReceiver(killBroadcastReceiver);
         Timber.uprootAll();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+
         //service must always be reconnected, even if ognService != null
         bindService(new Intent(this, OgnService.class), mConnection, Context.BIND_AUTO_CREATE);
 
@@ -948,15 +967,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 if (receiverMarkerMap.containsValue(marker)) {
                     return; //Don't show a dialog when info window of a receiver is clicked.
                 }
-                String address = "";
-                for (Map.Entry<String, Marker> entry : aircraftMarkerMap.entrySet()) {
-                    if (entry.getValue().equals(marker)) {
-                        address = entry.getKey();
-                        break;
-                    }
+
+                String markerId = marker.getId();
+                if(aircraftMarkerAddressMap.containsKey(markerId)) {
+                    String address = aircraftMarkerAddressMap.get(markerId);
+                    AircraftDialog.showDialog(MapsActivity.this, address);
                 }
 
-                AircraftDialog.showDialog(MapsActivity.this, address);
             }
         });
 
@@ -965,6 +982,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             public void onMapLongClick(LatLng latLng) {
                 String aprsFilter = AprsFilterManager.latLngToAprsFilter(latLng.latitude, latLng.longitude);
                 editAprsFilter(aprsFilter);
+            }
+        });
+
+        mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+            @Override
+            public void onMapClick(LatLng latLng) {
+                removeFlightPathLine();
             }
         });
     }
@@ -1117,6 +1141,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         });
 
+        mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+                                          @Override
+                                          public boolean onMarkerClick(Marker m) {
+                                              paintFlightPathForMarker(m); // m can be aircraft or receiver
+                                              return false; // must be false, otherwise infoWindow is not shown
+                                          }
+                                      });
+
         String aprsFilter = sharedPreferences.getString(getString(R.string.key_aprsfilter_preference), "");
         updateAprsFilterRange(aprsFilter);
     }
@@ -1148,6 +1180,90 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             updateKnownReceivers(ognService.receiverBundleMap);
             Timber.d("reloaded markers");
             resumeUpdatingMap();
+        }
+    }
+
+    private void updateKnownAircrafts(final Map<String, AircraftBundle> aircraftMap) {
+        for (final AircraftBundle bundle : aircraftMap.values()) {
+            updateAircraftBeaconMarker(bundle);
+        }
+    }
+
+    private void updateKnownReceivers(final Map<String, ReceiverBundle> receiverMap) {
+        for (final ReceiverBundle bundle : receiverMap.values()) {
+            updateReceiverBeaconMarker(bundle);
+        }
+    }
+
+    private void paintFlightPathForMarker(Marker marker) {
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        Boolean showFlightPath = sharedPreferences.getBoolean(getString(R.string.key_flightpath_aircraft_preference), false);
+
+        String markerId = marker.getId();
+
+        if (showFlightPath && aircraftMarkerAddressMap.containsKey(markerId)) {
+            String address = aircraftMarkerAddressMap.get(markerId);
+            getFlightPath(address);
+        }
+    }
+
+    private void getFlightPath(String address) {
+        if(address == null) {
+            removeFlightPathLine();
+            return;
+        }
+
+        Gson gson = new GsonBuilder().create();
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(AppConstants.FLIGHTPATH_API_BASE_URL)
+                .addConverterFactory(GsonConverterFactory.create(gson))
+                .build();
+        FlightPathApi flightPathApi = retrofit.create(FlightPathApi.class);
+        Call<FlightPath> call = flightPathApi.getFlightPath(address);
+        call.enqueue(new Callback<FlightPath>() {
+                         @Override
+                         public void onResponse(Call<FlightPath> call, Response<FlightPath> response) {
+                             if(response.isSuccessful()) {
+                                 paintFlightPath(response.body());
+                             }
+                         }
+
+                         @Override
+                         public void onFailure(Call<FlightPath> call, Throwable t) {
+                             Timber.d("Cannot get flightpath");
+                             removeFlightPathLine(); //remove already existing lines
+                         }
+                     });
+}
+
+    public void paintFlightPath(FlightPath flightPath) {
+        if (mMap != null & flightPath != null) {
+            PolylineOptions polylineOptions = new PolylineOptions();
+
+            if(flightPath.getPositions() == null) {
+                removeFlightPathLine();
+                return;
+            }
+
+            for (AircraftPosition position : flightPath.getPositions()) {
+                polylineOptions.add(new LatLng(position.getLatitude(), position.getLongitude()));
+            }
+
+            removeFlightPathLine();
+
+            flightPathLine = mMap.addPolyline(polylineOptions
+                            .width(10)
+                            .color(Color.RED)
+            );
+        }
+    }
+
+    public void removeFlightPathLine() {
+        if (flightPathLine != null) {
+            if (mMap != null) {
+                flightPathLine.remove();
+            }
+            flightPathLine = null;
         }
     }
 }
