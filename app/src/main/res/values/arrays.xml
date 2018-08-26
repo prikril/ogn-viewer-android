@@ -16,6 +16,18 @@
         <item>@string/map_normal</item>
     </string-array>
 
+    <string-array name="entries_aircraft_flightpath_preference">
+        <item>@string/flightpath_none</item>
+        <item>@string/flightpath_standard</item>
+        <item>@string/flightpath_multicolor_descr</item>
+    </string-array>
+
+    <string-array name="entryvalues_aircraft_flightpath_preference">
+        <item>@string/flightpath_none</item>
+        <item>@string/flightpath_standard</item>
+        <item>@string/flightpath_multicolor</item>
+    </string-array>
+
     <string-array name="entries_aircraft_colorisation_preference">
         <item>@string/altitude</item>
         <item>@string/speed</item>

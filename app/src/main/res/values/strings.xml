@@ -64,14 +64,15 @@
     <string name="title_rotate_aircraft_preference">Rotate Aircraft</string>
     <string name="summary_rotate_aircraft_preference">off</string>
 
-    <string name="key_flightpath_aircraft_preference">flightpath_aircraft_preference</string>
-    <string name="title_flightpath_aircraft_preference">Show Flight Path</string>
-    <string name="summary_flightpath_aircraft_preference">off</string>
+    <string name="key_aircraft_flightpath_preference">aircraft_flightpath_preference</string>
+    <string name="title_aircraft_flightpath_preference">Flight Path</string>
+    <string name="summary_aircraft_flightpath_preference">Standard</string>
+    <string name="dialog_title_aircraft_flightpath_preference">Flight Path</string>
 
     <string name="key_aircraft_colorisation_preference">colorisation_aircraft_preference</string>
     <string name="title_colorisation_preference">Coloration</string>
     <string name="summary_aircraft_colorisation_preference">Altitude</string>
-    <string name="dialog_title_colorisation_preference">Coloration</string>
+    <string name="dialog_title_aircraft_colorisation_preference">Coloration</string>
 
     <string name="key_aircraft_timeout_preference">timeout_aircraft_preference</string>
     <string name="title_timeout_preference">Remove inactive aircraft after</string>
@@ -132,6 +133,11 @@
     <string name="unit_kt">kt</string>
     <string name="unit_ms">m/s</string>
     <string name="unit_fpm">ft/min</string>
+
+    <string name="flightpath_none">None</string>
+    <string name="flightpath_standard">Standard</string>
+    <string name="flightpath_multicolor">Multicolor</string>
+    <string name="flightpath_multicolor_descr">Multicolor (slower)</string>
 
     <string name="aircraft_count">Aircraft Count</string>
     <string name="beacon_count">Beacon Count</string>

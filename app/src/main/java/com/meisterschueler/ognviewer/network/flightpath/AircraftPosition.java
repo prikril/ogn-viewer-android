@@ -10,6 +10,9 @@ public class AircraftPosition {
     @SerializedName("longitude")
     private double longitude;
 
+    @SerializedName("altitudeInMeters")
+    private double altitudeInMeters;
+
 
     public double getLatitude() {
         return latitude;
@@ -18,4 +21,9 @@ public class AircraftPosition {
     public double getLongitude() {
         return longitude;
     }
+
+    public double getAltitudeInMeters() {
+        return altitudeInMeters;
+    }
+
 }

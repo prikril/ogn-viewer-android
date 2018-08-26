@@ -71,11 +71,14 @@
             android:summary="@string/summary_rotate_aircraft_preference"
             android:defaultValue="false"/>
 
-        <CheckBoxPreference
-            android:key="@string/key_flightpath_aircraft_preference"
-            android:title="@string/title_flightpath_aircraft_preference"
-            android:summary="@string/summary_flightpath_aircraft_preference"
-            android:defaultValue="false"/>
+        <ListPreference
+            android:key="@string/key_aircraft_flightpath_preference"
+            android:title="@string/title_aircraft_flightpath_preference"
+            android:summary="@string/summary_aircraft_flightpath_preference"
+            android:entries="@array/entries_aircraft_flightpath_preference"
+            android:entryValues="@array/entryvalues_aircraft_flightpath_preference"
+            android:dialogTitle="@string/dialog_title_aircraft_flightpath_preference"
+            android:defaultValue="@string/flightpath_standard"/>
 
         <ListPreference
             android:key="@string/key_aircraft_colorisation_preference"
@@ -83,7 +86,7 @@
             android:summary="@string/summary_aircraft_colorisation_preference"
             android:entries="@array/entries_aircraft_colorisation_preference"
             android:entryValues="@array/entryvalues_aircraft_colorisation_preference"
-            android:dialogTitle="@string/dialog_title_colorisation_preference"
+            android:dialogTitle="@string/dialog_title_aircraft_colorisation_preference"
             android:defaultValue="@string/altitude"/>
 
         <ListPreference
@@ -113,7 +116,7 @@
             android:summary="@string/summary_receiver_colorisation_preference"
             android:entries="@array/entries_receiver_colorisation_preference"
             android:entryValues="@array/entryvalues_receiver_colorisation_preference"
-            android:dialogTitle="@string/dialog_title_colorisation_preference"
+            android:dialogTitle="@string/dialog_title_aircraft_colorisation_preference"
             android:defaultValue="@string/aircraft_count"/>
 
     </PreferenceCategory>

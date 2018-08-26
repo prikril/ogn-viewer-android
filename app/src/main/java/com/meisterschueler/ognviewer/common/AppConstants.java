@@ -33,4 +33,9 @@ public class AppConstants {
      */
     public static final String FLIGHTPATH_API_BASE_URL = "http://dominik-p.de:18820/api/";
 
+    /**
+     * restore markers after a little delay to prevent black screen issue
+     */
+    public static final int RESTORE_MAP_AFTER_DELAY_IN_MS = 500;
+
 }

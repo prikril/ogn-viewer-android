@@ -196,7 +196,9 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
             maxBeaconCounter = Math.max(maxBeaconCounter, receiverBundle.beaconCount);
         }
         if (refreshingActive) {
-            sendAircraftToMap(bundle);
+            if (!sendAircraftToMap(bundle)) {
+                Timber.d("Lost beacon for aircraft: " + aircraftBeacon.getAddress() + " " + new Date().getTime());
+            }
         }
 
         tcpServer.addFlarmMessage(new FlarmMessage(aircraftBeacon));
@@ -206,11 +208,11 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
         int hours = c.get(Calendar.HOUR_OF_DAY);
         int seconds = c.get(Calendar.SECOND);
         int minutes = c.get(Calendar.MINUTE);
-        Timber.d(aircraftBundleMap.size() + " AircraftBeacons " + hours + ":" + minutes + ":" + seconds);
-        Timber.d("Last aircraft: " + aircraftBeacon.getAddress());
+        Timber.v(aircraftBundleMap.size() + " AircraftBeacons " + hours + ":" + minutes + ":" + seconds);
+        Timber.v("Last aircraft: " + aircraftBeacon.getAddress());
     }
 
-    private void sendAircraftToMap(AircraftBundle aircraftBundle) {
+    private boolean sendAircraftToMap(AircraftBundle aircraftBundle) {
         AircraftBeacon aircraftBeacon = aircraftBundle.aircraftBeacon;
         AircraftDescriptor aircraftDescriptor = aircraftBundle.aircraftDescriptor;
         Intent intent = new Intent("AIRCRAFT-BEACON");
@@ -254,8 +256,9 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
 
         if (!mapCurrentlyUpdating) { //check if something is updating the map currently
             localBroadcastManager.sendBroadcast(intent);
+            return true;
         } else {
-            Timber.d("Lost beacon for aircraft: " + aircraftBeacon.getAddress() + " " + new Date().getTime());
+            return false;
         }
     }
 
@@ -327,8 +330,8 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
         int hours = c.get(Calendar.HOUR_OF_DAY);
         int seconds = c.get(Calendar.SECOND);
         int minutes = c.get(Calendar.MINUTE);
-        Timber.d(receiverBundleMap.size() + " ReceiverBeacons " + hours + ":" + minutes + ":" + seconds);
-        Timber.d("Last receiver: " + receiverBeacon.getId());
+        Timber.v(receiverBundleMap.size() + " ReceiverBeacons " + hours + ":" + minutes + ":" + seconds);
+        Timber.v("Last receiver: " + receiverBeacon.getId());
     }
 
     @Override
@@ -568,7 +571,6 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
 
         return resultMap;
     }
-
 
     public class LocalBinder extends Binder {
         OgnService getService() {

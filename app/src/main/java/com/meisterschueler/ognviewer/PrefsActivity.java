@@ -2,20 +2,30 @@ package com.meisterschueler.ognviewer;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 
+import com.meisterschueler.ognviewer.activity.KillBroadcastReceiver;
 import com.meisterschueler.ognviewer.common.AppConstants;
 import com.meisterschueler.ognviewer.ui.PrefsFragment;
 
 import timber.log.Timber;
 
 public class PrefsActivity extends Activity {
+
+    KillBroadcastReceiver killBroadcastReceiver;
+
     PrefsFragment prefsFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        killBroadcastReceiver = new KillBroadcastReceiver(this);
+        registerReceiver(killBroadcastReceiver, new IntentFilter("EMERGENCY_EXIT"));
+
+
         prefsFragment = new PrefsFragment();
         getFragmentManager().beginTransaction()
                 .replace(android.R.id.content, prefsFragment)
@@ -45,5 +55,12 @@ public class PrefsActivity extends Activity {
             // permissions this app might request.
         }
 
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        unregisterReceiver(killBroadcastReceiver);
     }
 }

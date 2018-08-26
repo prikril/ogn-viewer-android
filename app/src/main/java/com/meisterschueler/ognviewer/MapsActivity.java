@@ -15,8 +15,10 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.location.Location;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.CountDownTimer;
+import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.preference.PreferenceManager;
@@ -70,8 +72,10 @@ import org.ogn.commons.beacon.AircraftDescriptor;
 import org.ogn.commons.beacon.AircraftType;
 import org.ogn.commons.beacon.ReceiverBeacon;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -101,6 +105,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private CountDownTimer emptyFilterTimer;
 
     private Polyline flightPathLine;
+    private List<Polyline> flightPathLineList = new ArrayList<>();
     private KillBroadcastReceiver killBroadcastReceiver;
 
     private ServiceConnection mConnection = new ServiceConnection() {
@@ -476,7 +481,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             m.setPosition(new LatLng(lat, lon));
         }
 
-        Timber.d("updating marker for receiver: " + receiverName + " " + new Date().getTime());
+        Timber.v("updating marker for receiver: " + receiverName + " " + new Date().getTime());
 
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         Boolean showReceivers = sharedPreferences.getBoolean(getString(R.string.key_showreceivers_preference), false);
@@ -536,7 +541,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         if (infoWindowShown) {
             m.showInfoWindow();
         }
-        Timber.d("updated marker for receiver: " + receiverName + " " + new Date().getTime());
+        Timber.v("updated marker for receiver: " + receiverName + " " + new Date().getTime());
     }
 
     private void updateAircraftBeaconMarker(AircraftBundle bundle) {
@@ -579,7 +584,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         Marker m;
         boolean infoWindowShown = false;
 
-        Timber.d("updating marker for address: " + address + " " + new Date().getTime());
+        Timber.v("updating marker for address: " + address + " " + new Date().getTime());
 
         if (!aircraftMarkerMap.containsKey(address)) {
             if (mMap == null) {
@@ -636,7 +641,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         } else {
             title = address;
-            //maybe add aircraftType? 2018-02-11
+            title += " (" + aircraftType.name() + ")";
         }
         String humanTime = DateFormat.format("HH:mm:ss", timestamp).toString();
         int convertedAltitude = (int) alt;
@@ -769,7 +774,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             m.showInfoWindow();
         }
         ognService.setMapUpdatingStatus(false);
-        Timber.d("updated marker for address: " + address + " " + new Date().getTime());
+        Timber.v("updated marker for address: " + address + " " + new Date().getTime());
     }
 
     private void removeAircraftFromMap(String address) {
@@ -815,7 +820,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
         //additional speedup for onResume
         rangeCircle = null;
-        flightPathLine = null;
+        removeFlightPathLine();
         aircraftMarkerMap.clear();
         aircraftMarkerAddressMap.clear();
         receiverMarkerMap.clear();
@@ -845,7 +850,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         String aprsFilter = sharedPreferences.getString(getString(R.string.key_aprsfilter_preference), "");
         updateAprsFilterRange(aprsFilter); //necessary for the circle, because it was erased in onPause
-        resumeUpdatingMap();
+        //resumeUpdatingMap(); // do not resume here, it will be resumed after known markers are restored
 
         registerBroadcastReceivers();
     }
@@ -1174,34 +1179,49 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private void updateKnownMarkers() {
         //CAUTION: the update functions are very slow and take a few seconds (app seems to be frozen)
         if (ognServiceConnected && mapLoaded) {
+            final Toast warnToast = Toast.makeText(getApplicationContext(), "Restoring map...\nPlease wait.\nThis can take a few seconds.", Toast.LENGTH_SHORT);
+            warnToast.show();
             pauseUpdatingMap();
-            Timber.d("start reloading markers");
-            updateKnownAircrafts(ognService.aircraftBundleMap);
-            updateKnownReceivers(ognService.receiverBundleMap);
-            Timber.d("reloaded markers");
-            resumeUpdatingMap();
+
+            // start after a little delay to prevent black screen issue
+            final Handler handler = new Handler();
+            handler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    Timber.d("start reloading markers");
+                    updateKnownAircrafts(ognService.aircraftBundleMap);
+                    updateKnownReceivers(ognService.receiverBundleMap);
+                    Timber.d("reloaded markers");
+                    warnToast.cancel();
+                    resumeUpdatingMap();
+                }
+            }, AppConstants.RESTORE_MAP_AFTER_DELAY_IN_MS);
+
         }
+
     }
 
-    private void updateKnownAircrafts(final Map<String, AircraftBundle> aircraftMap) {
-        for (final AircraftBundle bundle : aircraftMap.values()) {
-            updateAircraftBeaconMarker(bundle);
+    private void updateKnownAircrafts(final Map<String, AircraftBundle> aircraftBundleMap) {
+        for (final AircraftBundle aircraftBundle : aircraftBundleMap.values()) {
+            updateAircraftBeaconMarker(aircraftBundle);
         }
+        Timber.d("reloaded aircraft markers");
     }
 
     private void updateKnownReceivers(final Map<String, ReceiverBundle> receiverMap) {
         for (final ReceiverBundle bundle : receiverMap.values()) {
             updateReceiverBeaconMarker(bundle);
         }
+        Timber.d("reloaded receiver markers");
     }
 
     private void paintFlightPathForMarker(Marker marker) {
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-        Boolean showFlightPath = sharedPreferences.getBoolean(getString(R.string.key_flightpath_aircraft_preference), false);
+        String flightPathOption = sharedPreferences.getString(getString(R.string.key_aircraft_flightpath_preference), getString(R.string.flightpath_standard));
 
         String markerId = marker.getId();
 
-        if (showFlightPath && aircraftMarkerAddressMap.containsKey(markerId)) {
+        if (!flightPathOption.equals(getString(R.string.flightpath_none)) && aircraftMarkerAddressMap.containsKey(markerId)) {
             String address = aircraftMarkerAddressMap.get(markerId);
             getFlightPath(address);
         }
@@ -1218,13 +1238,22 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .baseUrl(AppConstants.FLIGHTPATH_API_BASE_URL)
                 .addConverterFactory(GsonConverterFactory.create(gson))
                 .build();
-        FlightPathApi flightPathApi = retrofit.create(FlightPathApi.class);
+        final FlightPathApi flightPathApi = retrofit.create(FlightPathApi.class);
         Call<FlightPath> call = flightPathApi.getFlightPath(address);
         call.enqueue(new Callback<FlightPath>() {
                          @Override
                          public void onResponse(Call<FlightPath> call, Response<FlightPath> response) {
                              if(response.isSuccessful()) {
-                                 paintFlightPath(response.body());
+                                 Timber.d("got flight path from server");
+                                 SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+                                 String flightPathOption = sharedPreferences.getString(getString(R.string.key_aircraft_flightpath_preference), getString(R.string.flightpath_standard));
+                                 if (flightPathOption.equals(getString(R.string.flightpath_multicolor))) {
+                                     paintFlightPathWithHeights(response.body());
+                                 } else {
+                                     paintFlightPath(response.body());
+                                 }
+                             } else {
+                                 Timber.d("got flight path unsuccessfully from server");
                              }
                          }
 
@@ -1238,12 +1267,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     public void paintFlightPath(FlightPath flightPath) {
         if (mMap != null & flightPath != null) {
-            PolylineOptions polylineOptions = new PolylineOptions();
 
             if(flightPath.getPositions() == null) {
                 removeFlightPathLine();
                 return;
             }
+
+            PolylineOptions polylineOptions = new PolylineOptions();
 
             for (AircraftPosition position : flightPath.getPositions()) {
                 polylineOptions.add(new LatLng(position.getLatitude(), position.getLongitude()));
@@ -1258,12 +1288,104 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
-    public void removeFlightPathLine() {
-        if (flightPathLine != null) {
-            if (mMap != null) {
-                flightPathLine.remove();
+    public void paintFlightPathWithHeights(final FlightPath flightPath) {
+        if (mMap != null & flightPath != null) {
+
+            if(flightPath.getPositions() == null) {
+                removeFlightPathLine();
+                return;
             }
-            flightPathLine = null;
+
+            // dynamic min-max calculation, currently not needed 2018-08-24 (dominik)
+            /*
+            double minAlt = 0;
+            double maxAlt = 0;
+
+            for (AircraftPosition position : flightPath.getPositions()) {
+                double altitude = position.getAltitudeInMeters();
+                if (altitude < minAlt) {
+                    minAlt = altitude;
+                }
+                if (altitude > maxAlt) {
+                    maxAlt = altitude;
+                }
+            }
+            */
+
+            removeFlightPathLine();
+
+            pauseUpdatingMap();
+            final Toast warnToast = Toast.makeText(getApplicationContext(), "Loading flight path...\nPlease wait.\nThis can take a few seconds.", Toast.LENGTH_LONG);
+            warnToast.show();
+
+            // start after a little delay to prevent black screen issue
+            final Handler handler = new Handler();
+            handler.postDelayed(new Runnable() {
+
+                @Override
+                public void run() {
+                    final float minAlt = 500.0f;
+                    final float maxAlt = 3000.0f;
+                    AircraftPosition lastPosition = null;
+                    List<AircraftPosition> positions = flightPath.getPositions();
+
+                    if (positions.size() > 2) {
+                        int posCount = positions.size();
+                        Timber.d("got flight path with " + posCount + " positions");
+                        lastPosition = positions.get(0);
+
+                        float skipPositions = 1f; // must always be >=1
+                        final float maxPositions = 500;
+
+                        // workaround for much positions slowing down app
+                        if (posCount > maxPositions) {
+                            skipPositions = posCount / maxPositions;
+                        }
+                        Timber.d("set skip factor to " + skipPositions + " for flight path");
+
+                        for (float i=1; i < posCount; i+=skipPositions) {
+                            AircraftPosition position = positions.get((int) i);
+                            float avarageAlt = (float) (lastPosition.getAltitudeInMeters() + position.getAltitudeInMeters()) / 2;
+                            float hue = Utils.getHue(avarageAlt, minAlt, maxAlt, 0, 270);
+
+
+                            PolylineOptions polylineOptions = new PolylineOptions();
+                            polylineOptions.add(new LatLng(lastPosition.getLatitude(), lastPosition.getLongitude()))
+                                    .add(new LatLng(position.getLatitude(), position.getLongitude()))
+                                    .width(10)
+                                    .color(Color.HSVToColor(new float[]{hue, (float) 255, (float) 255}));
+
+                            Polyline polyline = mMap.addPolyline(polylineOptions);
+                            flightPathLineList.add(polyline);
+
+                            lastPosition = position;
+                        }
+                    }
+                    Timber.d("flight path painted on map");
+                    warnToast.cancel();
+                    resumeUpdatingMap();
+                }
+            }, 200);
+        } // end if
+    }
+
+
+
+    public void removeFlightPathLine() {
+        if (mMap != null) {
+            if (flightPathLineList != null) {
+                for (Polyline polyline : flightPathLineList) {
+                    polyline.remove();
+                }
+                flightPathLineList.clear();
+            }
+
+            if (flightPathLine != null) {
+                flightPathLine.remove();
+                flightPathLine = null;
+            }
         }
     }
+
+
 }

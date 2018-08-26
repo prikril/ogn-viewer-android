@@ -34,7 +34,7 @@ public class PrefsFragment extends PreferenceFragment implements SharedPreferenc
         updateFragmentValues(sharedPreferences, getString(R.string.key_shownonmoving_preference));
         updateFragmentValues(sharedPreferences, getString(R.string.key_showregistration_preference));
         updateFragmentValues(sharedPreferences, getString(R.string.key_rotate_aircraft_preference));
-        updateFragmentValues(sharedPreferences, getString(R.string.key_flightpath_aircraft_preference));
+        updateFragmentValues(sharedPreferences, getString(R.string.key_aircraft_flightpath_preference));
         updateFragmentValues(sharedPreferences, getString(R.string.key_aircraft_colorisation_preference));
         updateFragmentValues(sharedPreferences, getString(R.string.key_aircraft_timeout_preference));
         updateFragmentValues(sharedPreferences, getString(R.string.key_shownotactive_preference));
@@ -130,13 +130,9 @@ public class PrefsFragment extends PreferenceFragment implements SharedPreferenc
             } else {
                 pref.setSummary("off");
             }
-        } else if (key.equals(getString(R.string.key_flightpath_aircraft_preference))) {
-            Boolean value = sharedPreferences.getBoolean(getString(R.string.key_flightpath_aircraft_preference), false);
-            if (value) {
-                pref.setSummary("on");
-            } else {
-                pref.setSummary("off");
-            }
+        } else if (key.equals(getString(R.string.key_aircraft_flightpath_preference))) {
+            String value = sharedPreferences.getString(getString(R.string.key_aircraft_flightpath_preference), getString(R.string.flightpath_standard));
+            pref.setSummary(value);
         } else if (key.equals(getString(R.string.key_shownotactive_preference))) {
             Boolean value = sharedPreferences.getBoolean(getString(R.string.key_shownotactive_preference), true);
             if (value) {
