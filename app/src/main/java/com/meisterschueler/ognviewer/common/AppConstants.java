@@ -38,4 +38,10 @@ public class AppConstants {
      */
     public static final int RESTORE_MAP_AFTER_DELAY_IN_MS = 500;
 
+    /**
+     * minimal time between beacons for the same aircraft in MS;
+     */
+    public static final int MINIMAL_AIRCRAFT_DIFF_TIME_IN_MS = 1000;
+
+
 }

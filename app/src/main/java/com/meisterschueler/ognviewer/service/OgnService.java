@@ -198,6 +198,16 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
 
     @Override
     public void onUpdate(AircraftBeacon aircraftBeacon, AircraftDescriptor aircraftDescriptor) {
+        String address = aircraftBeacon.getAddress();
+        if (aircraftBundleMap.containsKey(address)) {
+            long lastTimestamp = aircraftBundleMap.get(address).aircraftBeacon.getTimestamp();
+            long diffTimeInMS = aircraftBeacon.getTimestamp() - lastTimestamp;
+            if (diffTimeInMS <= AppConstants.MINIMAL_AIRCRAFT_DIFF_TIME_IN_MS) {
+                Timber.v("skipped position for " + address);
+                return; // skip deprecated positions
+            }
+        }
+
         AircraftBundle bundle = new AircraftBundle(aircraftBeacon, aircraftDescriptor);
         aircraftBundleMap.put(aircraftBeacon.getAddress(), bundle);
 
