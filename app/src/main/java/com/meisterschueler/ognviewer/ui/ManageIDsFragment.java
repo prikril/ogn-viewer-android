@@ -8,11 +8,9 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
 
-import com.meisterschueler.ognviewer.AircraftDescriptorProviderHelper;
-import com.meisterschueler.ognviewer.AircraftDialog;
+import com.meisterschueler.ognviewer.common.AircraftDescriptorProviderHelper;
 import com.meisterschueler.ognviewer.CustomAircraftDescriptor;
-import com.meisterschueler.ognviewer.CustomAircraftDescriptorAdapter;
-import com.meisterschueler.ognviewer.CustomAircraftDescriptorProvider;
+import com.meisterschueler.ognviewer.common.CustomAircraftDescriptorProvider;
 import com.meisterschueler.ognviewer.R;
 
 import java.util.Map;

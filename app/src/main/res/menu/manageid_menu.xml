@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:tools="http://schemas.android.com/tools"
     xmlns:android="http://schemas.android.com/apk/res/android"
-    tools:context=".ManageIDsActivity">
+    tools:context=".activity.ManageIDsActivity">
     <item
         android:id="@+id/action_add_item"
         android:title="@string/action_add_item"/>

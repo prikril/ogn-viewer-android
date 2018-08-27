@@ -1,4 +1,4 @@
-package com.meisterschueler.ognviewer;
+package com.meisterschueler.ognviewer.activity;
 
 import android.app.Activity;
 import android.content.Intent;

@@ -4,15 +4,18 @@ import org.ogn.commons.beacon.AircraftDescriptor;
 
 import co.uk.rushorm.core.RushObject;
 
+/**
+ * CAUTION: moving to other package requires DB migration!!!
+ */
 public class CustomAircraftDescriptor extends RushObject {
     public String address;
 
-    String regNumber;
-    String CN;
-    String owner;
-    String homeBase;
-    String model;
-    String freq;
+    public String regNumber;
+    public String CN;
+    public String owner;
+    public String homeBase;
+    public String model;
+    public String freq;
 
     boolean favourite;
 

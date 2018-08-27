@@ -21,7 +21,7 @@
             android:value="@string/google_maps_key" />
 
         <activity
-            android:name=".MapsActivity"
+            android:name=".activity.MapsActivity"
             android:label="@string/title_activity_maps"
             android:launchMode="singleTop">
             <intent-filter>
@@ -31,15 +31,15 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".PrefsActivity"
+            android:name=".activity.PrefsActivity"
             android:label="Preferences">
         </activity>
         <activity
-            android:name=".ManageIDsActivity"
+            android:name=".activity.ManageIDsActivity"
             android:label="Manage IDs">
         </activity>
         <activity
-            android:name=".ClosingActivity"
+            android:name=".activity.ClosingActivity"
             android:label="Closing App">
         </activity>
 
@@ -78,7 +78,7 @@
         <meta-data android:name="Rush_classes_package" android:value="co.uk.rushexample" />
 
         <service
-            android:name=".OgnService">
+            android:name=".service.OgnService">
         </service>
 
     </application>

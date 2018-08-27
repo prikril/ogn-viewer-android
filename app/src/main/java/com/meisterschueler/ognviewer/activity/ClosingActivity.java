@@ -1,4 +1,4 @@
-package com.meisterschueler.ognviewer;
+package com.meisterschueler.ognviewer.activity;
 
 import android.app.Activity;
 import android.content.ComponentName;
@@ -6,6 +6,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.IBinder;
+
+import com.meisterschueler.ognviewer.service.OgnService;
 
 public class ClosingActivity extends Activity {
 

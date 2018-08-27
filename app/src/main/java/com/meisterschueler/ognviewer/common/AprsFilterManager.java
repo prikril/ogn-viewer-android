@@ -1,6 +1,4 @@
-package com.meisterschueler.ognviewer;
-
-import com.google.android.gms.maps.model.LatLng;
+package com.meisterschueler.ognviewer.common;
 
 import java.util.Locale;
 import java.util.regex.Matcher;
@@ -33,5 +31,20 @@ public class AprsFilterManager {
         double lat;
         double lon;
         double radius;
+
+
+        public double getLat() {
+            return lat;
+        }
+
+        public double getLon() {
+            return lon;
+        }
+
+        public double getRadius() {
+            return radius;
+        }
+
     }
+
 }

@@ -1,4 +1,4 @@
-package com.meisterschueler.ognviewer;
+package com.meisterschueler.ognviewer.ui;
 
 
 import android.content.Context;
@@ -7,6 +7,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
+
+import com.meisterschueler.ognviewer.R;
+import com.meisterschueler.ognviewer.CustomAircraftDescriptor;
 
 public class CustomAircraftDescriptorAdapter extends ArrayAdapter<CustomAircraftDescriptor> {
 

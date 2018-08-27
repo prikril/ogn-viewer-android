@@ -1,4 +1,4 @@
-package com.meisterschueler.ognviewer;
+package com.meisterschueler.ognviewer.service;
 
 import android.Manifest;
 import android.app.Activity;
@@ -31,10 +31,17 @@ import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.SettingsClient;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
+import com.meisterschueler.ognviewer.R;
+import com.meisterschueler.ognviewer.activity.ClosingActivity;
+import com.meisterschueler.ognviewer.activity.MapsActivity;
+import com.meisterschueler.ognviewer.common.AircraftDescriptorProviderHelper;
 import com.meisterschueler.ognviewer.common.AppConstants;
 import com.meisterschueler.ognviewer.common.FlarmMessage;
 import com.meisterschueler.ognviewer.common.ReceiverBeaconImplReplacement;
 import com.meisterschueler.ognviewer.common.ReceiverBundle;
+import com.meisterschueler.ognviewer.common.entity.Aircraft;
+import com.meisterschueler.ognviewer.common.entity.AircraftBundle;
+import com.meisterschueler.ognviewer.CustomAircraftDescriptor;
 
 import org.ogn.client.AircraftBeaconListener;
 import org.ogn.client.OgnClient;
@@ -74,8 +81,8 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
 
     private int maxAircraftCounter = 0;
     private int maxBeaconCounter = 0;
-    Map<String, ReceiverBundle> receiverBundleMap = new ConcurrentHashMap<>();
-    Map<String, AircraftBundle> aircraftBundleMap = new ConcurrentHashMap<>();
+    private Map<String, ReceiverBundle> receiverBundleMap = new ConcurrentHashMap<>();
+    private Map<String, AircraftBundle> aircraftBundleMap = new ConcurrentHashMap<>();
 
     private ScheduledExecutorService scheduledTaskExecutor;
     private boolean refreshingActive = false; // if true, markers on map should be updated
@@ -86,6 +93,15 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
     private boolean locationUpdatesAlreadyRequested = false;
     private FusedLocationProviderClient fusedLocationProviderClient;
     private LocationCallback locationCallback;
+
+
+    public Map<String, ReceiverBundle> getReceiverBundleMap() {
+        return receiverBundleMap;
+    }
+
+    public Map<String, AircraftBundle> getAircraftBundleMap() {
+        return aircraftBundleMap;
+    }
 
     public void setMapUpdatingStatus(boolean updating) {
         mapCurrentlyUpdating = updating;
@@ -105,7 +121,7 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
     }
 
     // Trigger new location updates at interval
-    protected void startLocationUpdates(Activity activity) {
+    public void startLocationUpdates(Activity activity) {
         if (locationUpdatesAlreadyRequested) {
             return;
         }
@@ -573,7 +589,7 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
     }
 
     public class LocalBinder extends Binder {
-        OgnService getService() {
+        public OgnService getService() {
             return OgnService.this;
         }
     }

@@ -1,4 +1,4 @@
-package com.meisterschueler.ognviewer;
+package com.meisterschueler.ognviewer.ui;
 
 
 import android.app.AlertDialog;
@@ -7,6 +7,11 @@ import android.content.DialogInterface;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
+
+import com.meisterschueler.ognviewer.common.AircraftDescriptorProviderHelper;
+import com.meisterschueler.ognviewer.CustomAircraftDescriptor;
+import com.meisterschueler.ognviewer.common.CustomAircraftDescriptorProvider;
+import com.meisterschueler.ognviewer.R;
 
 import org.ogn.commons.beacon.AircraftDescriptor;
 import org.ogn.commons.beacon.descriptor.AircraftDescriptorProvider;

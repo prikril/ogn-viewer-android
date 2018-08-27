@@ -11,7 +11,7 @@ import android.preference.SwitchPreference;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 
-import com.meisterschueler.ognviewer.OgnService;
+import com.meisterschueler.ognviewer.service.OgnService;
 import com.meisterschueler.ognviewer.R;
 import com.meisterschueler.ognviewer.common.AppConstants;
 

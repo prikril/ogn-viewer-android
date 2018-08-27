@@ -1,4 +1,6 @@
-package com.meisterschueler.ognviewer;
+package com.meisterschueler.ognviewer.common;
+
+import com.meisterschueler.ognviewer.CustomAircraftDescriptor;
 
 import org.ogn.commons.beacon.AircraftDescriptor;
 import org.ogn.commons.beacon.descriptor.AircraftDescriptorProvider;

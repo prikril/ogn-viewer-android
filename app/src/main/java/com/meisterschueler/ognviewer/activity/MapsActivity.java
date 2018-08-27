@@ -1,4 +1,4 @@
-package com.meisterschueler.ognviewer;
+package com.meisterschueler.ognviewer.activity;
 
 import android.Manifest;
 import android.app.AlertDialog;
@@ -15,7 +15,6 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.location.Location;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
@@ -59,13 +58,18 @@ import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.maps.android.ui.IconGenerator;
-import com.meisterschueler.ognviewer.activity.KillBroadcastReceiver;
+import com.meisterschueler.ognviewer.BuildConfig;
+import com.meisterschueler.ognviewer.service.OgnService;
+import com.meisterschueler.ognviewer.R;
 import com.meisterschueler.ognviewer.common.AppConstants;
+import com.meisterschueler.ognviewer.common.AprsFilterManager;
 import com.meisterschueler.ognviewer.common.ReceiverBundle;
 import com.meisterschueler.ognviewer.common.Utils;
+import com.meisterschueler.ognviewer.common.entity.AircraftBundle;
 import com.meisterschueler.ognviewer.network.flightpath.AircraftPosition;
 import com.meisterschueler.ognviewer.network.flightpath.FlightPath;
 import com.meisterschueler.ognviewer.network.flightpath.FlightPathApi;
+import com.meisterschueler.ognviewer.ui.AircraftDialog;
 
 import org.ogn.commons.beacon.AircraftBeacon;
 import org.ogn.commons.beacon.AircraftDescriptor;
@@ -1075,8 +1079,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         AprsFilterManager.Circle circle = AprsFilterManager.parse(aprsFilter);
         if (circle != null) {
-            rangeCircle.setCenter(new LatLng(circle.lat, circle.lon));
-            rangeCircle.setRadius(circle.radius * 1000);
+            rangeCircle.setCenter(new LatLng(circle.getLat(), circle.getLon()));
+            rangeCircle.setRadius(circle.getRadius() * 1000);
             rangeCircle.setVisible(true);
         }
     }
@@ -1189,8 +1193,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 @Override
                 public void run() {
                     Timber.d("start reloading markers");
-                    updateKnownAircrafts(ognService.aircraftBundleMap);
-                    updateKnownReceivers(ognService.receiverBundleMap);
+                    updateKnownAircrafts(ognService.getAircraftBundleMap());
+                    updateKnownReceivers(ognService.getReceiverBundleMap());
                     Timber.d("reloaded markers");
                     warnToast.cancel();
                     resumeUpdatingMap();
