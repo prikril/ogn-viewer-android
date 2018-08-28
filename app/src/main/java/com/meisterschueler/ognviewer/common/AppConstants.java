@@ -43,5 +43,10 @@ public class AppConstants {
      */
     public static final int MINIMAL_AIRCRAFT_DIFF_TIME_IN_MS = 1000;
 
+    /**
+     * action name for emergency exit intent
+     */
+    public static final String EMERGENCY_EXIT_INTENT_ACTION_NAME = "EMERGENCY_EXIT";
+
 
 }

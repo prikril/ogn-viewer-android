@@ -1,4 +1,4 @@
-package com.meisterschueler.ognviewer.activity;
+package com.meisterschueler.ognviewer.activity.base;
 
 import android.app.Activity;
 import android.content.BroadcastReceiver;

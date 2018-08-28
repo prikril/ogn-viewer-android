@@ -22,7 +22,6 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.text.format.DateFormat;
@@ -44,8 +43,8 @@ import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.SettingsClient;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.Circle;
@@ -59,8 +58,8 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.maps.android.ui.IconGenerator;
 import com.meisterschueler.ognviewer.BuildConfig;
-import com.meisterschueler.ognviewer.service.OgnService;
 import com.meisterschueler.ognviewer.R;
+import com.meisterschueler.ognviewer.activity.base.BaseActivity;
 import com.meisterschueler.ognviewer.common.AppConstants;
 import com.meisterschueler.ognviewer.common.AprsFilterManager;
 import com.meisterschueler.ognviewer.common.ReceiverBundle;
@@ -69,6 +68,7 @@ import com.meisterschueler.ognviewer.common.entity.AircraftBundle;
 import com.meisterschueler.ognviewer.network.flightpath.AircraftPosition;
 import com.meisterschueler.ognviewer.network.flightpath.FlightPath;
 import com.meisterschueler.ognviewer.network.flightpath.FlightPathApi;
+import com.meisterschueler.ognviewer.service.OgnService;
 import com.meisterschueler.ognviewer.ui.AircraftDialog;
 
 import org.ogn.commons.beacon.AircraftBeacon;
@@ -90,7 +90,7 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 import timber.log.Timber;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback,
+public class MapsActivity extends BaseActivity implements OnMapReadyCallback,
         GoogleMap.OnCameraMoveStartedListener, GoogleMap.OnCameraIdleListener, GoogleMap.OnMapLoadedCallback {
 
     private static final String TAG = "MapsActivity";
@@ -110,7 +110,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private Polyline flightPathLine;
     private List<Polyline> flightPathLineList = new ArrayList<>();
-    private KillBroadcastReceiver killBroadcastReceiver;
 
     private ServiceConnection mConnection = new ServiceConnection() {
         public void onServiceConnected(ComponentName className, IBinder binder) {
@@ -361,9 +360,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        killBroadcastReceiver = new KillBroadcastReceiver(this);
-        registerReceiver(killBroadcastReceiver, new IntentFilter("EMERGENCY_EXIT"));
 
         setContentView(R.layout.fragment_maps);
         if (BuildConfig.DEBUG) {
@@ -839,7 +835,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     protected void onDestroy() {
         super.onDestroy();
         mapLoaded = false;
-        unregisterReceiver(killBroadcastReceiver);
         Timber.uprootAll();
     }
 
@@ -960,8 +955,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private void checkSetUpMap() {
         if (mMap == null) {
-            SupportMapFragment suppMapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
-            suppMapFragment.getMapAsync(this);
+            MapFragment mapFragment = (MapFragment) getFragmentManager().findFragmentById(R.id.map);
+            mapFragment.getMapAsync(this);
         }
     }
 
@@ -1349,8 +1344,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                         for (float i=1; i < posCount; i+=skipPositions) {
                             AircraftPosition position = positions.get((int) i);
-                            float avarageAlt = (float) (lastPosition.getAltitudeInMeters() + position.getAltitudeInMeters()) / 2;
-                            float hue = Utils.getHue(avarageAlt, minAlt, maxAlt, 0, 270);
+                            float averageAlt = (float) (lastPosition.getAltitudeInMeters() + position.getAltitudeInMeters()) / 2;
+                            float hue = Utils.getHue(averageAlt, minAlt, maxAlt, 0, 270);
 
 
                             PolylineOptions polylineOptions = new PolylineOptions();
@@ -1372,8 +1367,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }, 200);
         } // end if
     }
-
-
 
     public void removeFlightPathLine() {
         if (mMap != null) {

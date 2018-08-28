@@ -1,30 +1,22 @@
 package com.meisterschueler.ognviewer.activity;
 
-import android.app.Activity;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 
-import com.meisterschueler.ognviewer.activity.KillBroadcastReceiver;
+import com.meisterschueler.ognviewer.activity.base.BaseActivity;
 import com.meisterschueler.ognviewer.common.AppConstants;
 import com.meisterschueler.ognviewer.ui.PrefsFragment;
 
 import timber.log.Timber;
 
-public class PrefsActivity extends Activity {
-
-    KillBroadcastReceiver killBroadcastReceiver;
+public class PrefsActivity extends BaseActivity {
 
     PrefsFragment prefsFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        killBroadcastReceiver = new KillBroadcastReceiver(this);
-        registerReceiver(killBroadcastReceiver, new IntentFilter("EMERGENCY_EXIT"));
-
 
         prefsFragment = new PrefsFragment();
         getFragmentManager().beginTransaction()
@@ -57,10 +49,4 @@ public class PrefsActivity extends Activity {
 
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-
-        unregisterReceiver(killBroadcastReceiver);
-    }
 }

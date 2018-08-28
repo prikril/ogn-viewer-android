@@ -7,16 +7,15 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.IBinder;
 
+import com.meisterschueler.ognviewer.common.AppConstants;
 import com.meisterschueler.ognviewer.service.OgnService;
 
 public class ClosingActivity extends Activity {
 
-
-
     private ServiceConnection mConnection = new ServiceConnection() {
         public void onServiceConnected(ComponentName className, IBinder binder) {
             stopService(new Intent(getBaseContext(), OgnService.class));
-            Intent exitIntent = new Intent("EMERGENCY_EXIT");
+            Intent exitIntent = new Intent(AppConstants.EMERGENCY_EXIT_INTENT_ACTION_NAME);
             sendBroadcast(exitIntent);
             finish();
         }
@@ -33,4 +32,5 @@ public class ClosingActivity extends Activity {
         super.onResume();
         bindService(new Intent(this, OgnService.class), mConnection, Context.BIND_AUTO_CREATE);
     }
+
 }
