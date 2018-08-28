@@ -31,7 +31,7 @@ public class AppConstants {
     /**
      * REST API base url for flightpath
      */
-    public static final String FLIGHTPATH_API_BASE_URL = "http://dominik-p.de:18820/api/";
+    public static final String FLIGHTPATH_API_BASE_URL = "http://ogn.dominik-p.de:18820/api/";
 
     /**
      * restore markers after a little delay to prevent black screen issue
