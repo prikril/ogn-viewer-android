@@ -36,17 +36,27 @@ public class AppConstants {
     /**
      * restore markers after a little delay to prevent black screen issue
      */
-    public static final int RESTORE_MAP_AFTER_DELAY_IN_MS = 500;
+    public static final int RESTORE_MAP_AFTER_DELAY_IN_MS = 700;
 
     /**
-     * minimal time between beacons for the same aircraft in MS;
+     * minimal time between beacons for the same aircraft in MS
      */
-    public static final int MINIMAL_AIRCRAFT_DIFF_TIME_IN_MS = 1000;
+    public static final int MINIMAL_AIRCRAFT_DIFF_TIME_IN_MS = 500;
 
     /**
      * action name for emergency exit intent
      */
     public static final String EMERGENCY_EXIT_INTENT_ACTION_NAME = "EMERGENCY_EXIT";
+
+    /**
+     * minimal value for coloration of altitude in meters
+     */
+    public static final float MIN_ALT_FOR_COLORATION = 500.0f;
+
+    /**
+     * maximal value for coloration of altitude in meters
+     */
+    public static final float MAX_ALT_FOR_COLORATION = 3000.0f;
 
 
 }

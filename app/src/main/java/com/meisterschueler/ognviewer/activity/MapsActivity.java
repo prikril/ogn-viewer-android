@@ -198,10 +198,10 @@ public class MapsActivity extends BaseActivity implements OnMapReadyCallback,
             changeAircraftTimeout(); // WARNING: will not work here, because ognService connects async
 
             //receivers
-            Boolean showreceivers = sharedPreferences.getBoolean(getString(R.string.key_showreceivers_preference), true);
+            Boolean showReceivers = sharedPreferences.getBoolean(getString(R.string.key_showreceivers_preference), true);
             // receiverMarkerMap should always be empty with current implementation 2018-02-26
             for (Marker m : receiverMarkerMap.values()) { // this is not slow!
-                m.setVisible(showreceivers);
+                m.setVisible(showReceivers);
             }
             Timber.d("applied changed options");
         }
@@ -323,24 +323,24 @@ public class MapsActivity extends BaseActivity implements OnMapReadyCallback,
     private void changeAircraftTimeout() {
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         String timeout = sharedPreferences.getString(getString(R.string.key_aircraft_timeout_preference), getString(R.string.time_5m));
-        int timoutInSec = AppConstants.DEFAULT_AIRCRAFT_TIMEOUT_IN_SEC;
+        int timeoutInSec = AppConstants.DEFAULT_AIRCRAFT_TIMEOUT_IN_SEC;
         if (timeout.equals(getString(R.string.time_30s))) {
-            timoutInSec = 30;
+            timeoutInSec = 30;
         } else if (timeout.equals(getString(R.string.time_1m))){
-            timoutInSec = 60;
+            timeoutInSec = 60;
         } else if (timeout.equals(getString(R.string.time_2m))){
-            timoutInSec = 120;
+            timeoutInSec = 120;
         } else if (timeout.equals(getString(R.string.time_5m))){
-            timoutInSec = 300;
+            timeoutInSec = 300;
         } else if (timeout.equals(getString(R.string.time_10m))){
-            timoutInSec = 600;
+            timeoutInSec = 600;
         } else if (timeout.equals(getString(R.string.time_30m))){
-            timoutInSec = 1800;
+            timeoutInSec = 1800;
         } else if (timeout.equals(getString(R.string.time_1h))){
-            timoutInSec = 3600;
+            timeoutInSec = 3600;
         }
         if (ognService != null) {
-            ognService.setAircraftTimeout(timoutInSec);
+            ognService.setAircraftTimeout(timeoutInSec);
         }
     }
 
@@ -672,8 +672,8 @@ public class MapsActivity extends BaseActivity implements OnMapReadyCallback,
         float hue = 0;
         int color = Color.rgb(255, 255, 255);
         if (colorisation.equals(getString(R.string.altitude))) {
-            final float minAlt = 500.0f;
-            final float maxAlt = 3000.0f;
+            final float minAlt = AppConstants.MIN_ALT_FOR_COLORATION;
+            final float maxAlt = AppConstants.MAX_ALT_FOR_COLORATION;
             hue = Utils.getHue(alt, minAlt, maxAlt, 0, 270);
         } else if (colorisation.equals(getString(R.string.speed))) {
             final float minSpeed = 50.0f;
@@ -1323,8 +1323,8 @@ public class MapsActivity extends BaseActivity implements OnMapReadyCallback,
 
                 @Override
                 public void run() {
-                    final float minAlt = 500.0f;
-                    final float maxAlt = 3000.0f;
+                    final float minAlt = AppConstants.MIN_ALT_FOR_COLORATION;
+                    final float maxAlt = AppConstants.MAX_ALT_FOR_COLORATION;
                     AircraftPosition lastPosition = null;
                     List<AircraftPosition> positions = flightPath.getPositions();
 

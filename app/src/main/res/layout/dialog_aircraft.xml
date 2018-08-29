@@ -30,7 +30,8 @@
         android:layout_height="wrap_content"
         android:id="@+id/editTextOwner"
         android:layout_gravity="center_horizontal"
-        android:hint="@string/empty_owner" />
+        android:hint="@string/empty_owner"
+        android:inputType="textCapWords" />
 
     <EditText
         android:layout_width="match_parent"
@@ -45,7 +46,8 @@
         android:layout_height="wrap_content"
         android:id="@+id/editTextModel"
         android:layout_gravity="center_horizontal"
-        android:hint="@string/empty_model" />
+        android:hint="@string/empty_model"
+        android:inputType="textCapWords" />
 
     <EditText
         android:layout_width="match_parent"
