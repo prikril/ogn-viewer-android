@@ -41,6 +41,15 @@
             android:dialogTitle="@string/dialog_title_map_type_preference"
             android:defaultValue="@string/terrain"/>
 
+        <ListPreference
+            android:key="@string/key_screen_orientation_preference"
+            android:title="@string/title_screen_orientation_preference"
+            android:summary="@string/summary_screen_orientation_preference"
+            android:entries="@array/entries_screen_orientation_preference"
+            android:entryValues="@array/entryvalues_screen_orientation_preference"
+            android:dialogTitle="@string/dialog_title_screen_orientation_preference"
+            android:defaultValue="@string/orientation_automatic"/>
+
         <CheckBoxPreference
             android:key="@string/key_keepscreenon_preference"
             android:title="@string/title_keepscreenon_preference"

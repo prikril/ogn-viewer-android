@@ -48,6 +48,11 @@
     <string name="summary_map_type_preference">Terrain</string>
     <string name="dialog_title_map_type_preference">Map type</string>
 
+    <string name="key_screen_orientation_preference">screen_orientation_preference</string>
+    <string name="title_screen_orientation_preference">Screen Orientation</string>
+    <string name="summary_screen_orientation_preference">Automatic</string>
+    <string name="dialog_title_screen_orientation_preference">Screen Orientation</string>
+
     <string name="key_keepscreenon_preference">keepscreenon_preference</string>
     <string name="title_keepscreenon_preference">Keep Screen On</string>
     <string name="summary_keepscreenon_preference">off</string>
@@ -113,6 +118,9 @@
     <string name="map_none">None</string>
     <string name="map_normal">Normal</string>
 
+    <string name="orientation_automatic">Automatic</string>
+    <string name="orientation_portrait">Portrait</string>
+    <string name="orientation_landscape_lr">Landscape L+R</string>
 
     <string name="altitude">Altitude</string>
     <string name="speed">Speed</string>

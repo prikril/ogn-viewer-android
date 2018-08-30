@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -194,6 +195,7 @@ public class MapsActivity extends BaseActivity implements OnMapReadyCallback,
             //map type
             changeMapType();
 
+            changeScreenOrientation();
             changeKeepScreenOn();
             changeAircraftTimeout(); // WARNING: will not work here, because ognService connects async
 
@@ -311,6 +313,18 @@ public class MapsActivity extends BaseActivity implements OnMapReadyCallback,
         }
     }
 
+    private void changeScreenOrientation() {
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        String orientation = sharedPreferences.getString(getString(R.string.key_screen_orientation_preference), getString(R.string.orientation_automatic));
+        if (orientation.equals(getString(R.string.orientation_portrait))) {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        } else if (orientation.equals(getString(R.string.orientation_landscape_lr))) {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+        } else {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
+        }
+    }
+
     private void changeKeepScreenOn() {
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         if (sharedPreferences.getBoolean(getString(R.string.key_keepscreenon_preference), false)) {
@@ -365,6 +379,7 @@ public class MapsActivity extends BaseActivity implements OnMapReadyCallback,
         if (BuildConfig.DEBUG) {
             Timber.plant(new Timber.DebugTree());
         }
+        changeScreenOrientation();
         changeKeepScreenOn();
 
         //TODO: why is this necessary in onCreate? dominik: 2017-11-12

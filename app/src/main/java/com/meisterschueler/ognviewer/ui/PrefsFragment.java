@@ -30,6 +30,7 @@ public class PrefsFragment extends PreferenceFragment implements SharedPreferenc
         updateFragmentValues(sharedPreferences, getString(R.string.key_showaircrafts_preference));
         updateFragmentValues(sharedPreferences, getString(R.string.key_showreceivers_preference));
         updateFragmentValues(sharedPreferences, getString(R.string.key_map_type_preference));
+        updateFragmentValues(sharedPreferences, getString(R.string.key_screen_orientation_preference));
         updateFragmentValues(sharedPreferences, getString(R.string.key_keepscreenon_preference));
         updateFragmentValues(sharedPreferences, getString(R.string.key_shownonmoving_preference));
         updateFragmentValues(sharedPreferences, getString(R.string.key_showregistration_preference));
@@ -101,7 +102,9 @@ public class PrefsFragment extends PreferenceFragment implements SharedPreferenc
         } else if (key.equals(getString(R.string.key_map_type_preference))) {
             String value = sharedPreferences.getString(getString(R.string.key_map_type_preference), getString(R.string.terrain));
             pref.setSummary(value);
-
+        } else if (key.equals(getString(R.string.key_screen_orientation_preference))) {
+            String value = sharedPreferences.getString(getString(R.string.key_screen_orientation_preference), getString(R.string.orientation_automatic));
+            pref.setSummary(value);
         } else if (key.equals(getString(R.string.key_keepscreenon_preference))) {
             Boolean value = sharedPreferences.getBoolean(getString(R.string.key_keepscreenon_preference), false);
             if (value) {
@@ -132,7 +135,11 @@ public class PrefsFragment extends PreferenceFragment implements SharedPreferenc
             }
         } else if (key.equals(getString(R.string.key_aircraft_flightpath_preference))) {
             String value = sharedPreferences.getString(getString(R.string.key_aircraft_flightpath_preference), getString(R.string.flightpath_standard));
-            pref.setSummary(value);
+            if (value.equals(getString(R.string.flightpath_multicolor))){
+                pref.setSummary(R.string.flightpath_multicolor_descr);
+            } else {
+                pref.setSummary(value);
+            }
         } else if (key.equals(getString(R.string.key_shownotactive_preference))) {
             Boolean value = sharedPreferences.getBoolean(getString(R.string.key_shownotactive_preference), true);
             if (value) {

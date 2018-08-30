@@ -16,6 +16,18 @@
         <item>@string/map_normal</item>
     </string-array>
 
+    <string-array name="entries_screen_orientation_preference">
+        <item>@string/orientation_automatic</item>
+        <item>@string/orientation_portrait</item>
+        <item>@string/orientation_landscape_lr</item>
+    </string-array>
+
+    <string-array name="entryvalues_screen_orientation_preference">
+        <item>@string/orientation_automatic</item>
+        <item>@string/orientation_portrait</item>
+        <item>@string/orientation_landscape_lr</item>
+    </string-array>
+
     <string-array name="entries_aircraft_flightpath_preference">
         <item>@string/flightpath_none</item>
         <item>@string/flightpath_standard</item>
