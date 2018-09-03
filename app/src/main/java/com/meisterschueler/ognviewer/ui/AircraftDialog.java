@@ -34,10 +34,15 @@ public class AircraftDialog {
             cad = new CustomAircraftDescriptor(address, "", "", "", "", "", "");
         }
 
-        showDialog(context, cad);
+        showDialog(context, cad, null);
     }
 
-    public static void showDialog(Context context, final CustomAircraftDescriptor cad) {
+    public static void showEmptyDialog(Context context, AircraftDialogCallback callback) {
+        CustomAircraftDescriptor cad = new CustomAircraftDescriptor("", "", "", "", "", "", "");
+        showDialog(context, cad, callback);
+    }
+
+    public static void showDialog(Context context, final CustomAircraftDescriptor cad, final AircraftDialogCallback callback) {
         View view = LayoutInflater.from(context).inflate(R.layout.dialog_aircraft, null);
 
         final EditText etAddress = view.findViewById(R.id.editTextAddress);
@@ -58,7 +63,7 @@ public class AircraftDialog {
 
         new AlertDialog.Builder(context)
                 .setView(view)
-                .setTitle("Edit aircraft informations")
+                .setTitle("Edit aircraft information")
                 .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int id) {
@@ -72,6 +77,9 @@ public class AircraftDialog {
 
                         CustomAircraftDescriptorProvider cadp = (CustomAircraftDescriptorProvider) AircraftDescriptorProviderHelper.getCustomDbAircraftDescriptorProvider();
                         cadp.saveCustomAircraftDescriptor(cad);
+                        if (callback != null) {
+                            callback.notifyUpdated();
+                        }
                     }
                 })
                 .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {

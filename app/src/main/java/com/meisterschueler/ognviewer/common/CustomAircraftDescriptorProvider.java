@@ -36,6 +36,14 @@ public class CustomAircraftDescriptorProvider implements AircraftDescriptorProvi
         }
     }
 
+    public void removeCustomAircraftDescriptor(CustomAircraftDescriptor cad) {
+        aircraftDescriptorMap.remove(cad.address);
+        cad = new RushSearch().whereEqual("address", cad.address).findSingle(CustomAircraftDescriptor.class);
+        if (cad != null) {
+            cad.delete();
+        }
+    }
+
     @Override
     public AircraftDescriptor findDescriptor(String address) {
         CustomAircraftDescriptor cad = aircraftDescriptorMap.get(address);
