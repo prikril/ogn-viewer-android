@@ -1,5 +1,14 @@
 # OGN Viewer Release Notes
 
+## 1.3.9
+* New: multicolor flight path (see settings)
+* New: screen orientation setting
+* Fixed: jumping aircraft position (issue #14)
+* Fixed: black screen issue (while restoring map)
+* Changed: info window click (short and long)
+* improved manageIDs activity (delete function on long click)
+* many internal improvements and refactorings
+
 ## 1.3.8
 * New: flight paths of aircraft (must be enabled in settings)
 * New: (emergency) stop button at notification
