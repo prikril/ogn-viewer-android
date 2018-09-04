@@ -983,15 +983,21 @@ public class MapsActivity extends BaseActivity implements OnMapReadyCallback,
         mMap.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
             @Override
             public void onInfoWindowClick(Marker marker) {
-                if (receiverMarkerMap.containsValue(marker)) {
-                    return; //Don't show a dialog when info window of a receiver is clicked.
-                }
+                    marker.hideInfoWindow();
+            }
+        });
+
+        mMap.setOnInfoWindowLongClickListener(new GoogleMap.OnInfoWindowLongClickListener() {
+            @Override
+            public void onInfoWindowLongClick(Marker marker) {
 
                 String markerId = marker.getId();
                 if(aircraftMarkerAddressMap.containsKey(markerId)) {
                     String address = aircraftMarkerAddressMap.get(markerId);
                     AircraftDialog.showDialog(MapsActivity.this, address);
                 }
+
+                //Don't show a dialog when info window of a receiver is clicked.
 
             }
         });
