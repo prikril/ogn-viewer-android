@@ -17,6 +17,9 @@
 
     <!-- Aircraft Dialog Menu -->
     <string name="action_add_item">Add item</string>
+    <string name="action_import_items">Import items</string>
+    <string name="action_export_items">Export items</string>
+    <string name="action_delete_all_items">Delete all items</string>
     <string name="notification_id">ogn_notification</string>
 
     <!-- Aircraft Dialog -->

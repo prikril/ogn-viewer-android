@@ -1,8 +1,10 @@
 package com.meisterschueler.ognviewer.ui;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ListFragment;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -16,6 +18,7 @@ import com.meisterschueler.ognviewer.R;
 import com.meisterschueler.ognviewer.common.AircraftDescriptorProviderHelper;
 import com.meisterschueler.ognviewer.common.CustomAircraftDescriptorProvider;
 
+import java.io.File;
 import java.util.Map;
 
 public class ManageIDsFragment extends ListFragment implements AircraftDialogCallback {
@@ -23,6 +26,8 @@ public class ManageIDsFragment extends ListFragment implements AircraftDialogCal
     private CustomAircraftDescriptorProvider adp1;
     private Map<String, CustomAircraftDescriptor> aircraftDescriptorMap;
     private CustomAircraftDescriptorAdapter adapter;
+
+    private static final int REQUEST_CODE_IMPORT = 123;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -42,11 +47,51 @@ public class ManageIDsFragment extends ListFragment implements AircraftDialogCal
         switch (id) {
             case R.id.action_add_item:
                 AircraftDialog.showEmptyDialog(getActivity(), this);
+                break;
 
+            case R.id.action_import_items:
+                Intent intentImport = new Intent(Intent.ACTION_GET_CONTENT);
+                intentImport.addCategory(Intent.CATEGORY_OPENABLE);
+                intentImport.setType("text/comma-separated-values");
+                startActivityForResult(intentImport, REQUEST_CODE_IMPORT);
+                break;
+
+            case R.id.action_export_items:
+                adp1.writeToFile();
+                break;
+
+            case R.id.action_delete_all_items:
+                DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        switch (which){
+                            case DialogInterface.BUTTON_POSITIVE:
+                                adp1.removeAll();
+                                break;
+
+                            case DialogInterface.BUTTON_NEGATIVE:
+                                //No button clicked
+                                break;
+                        }
+                    }
+                };
+
+                AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+                builder.setMessage("Are you sure?").setPositiveButton("Yes", dialogClickListener)
+                        .setNegativeButton("No", dialogClickListener).show();
                 break;
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if(requestCode == REQUEST_CODE_IMPORT && resultCode == Activity.RESULT_OK && data != null) {
+            adp1.readFromFile(new File(data.getData().getPath()));
+        }
     }
 
     @Override

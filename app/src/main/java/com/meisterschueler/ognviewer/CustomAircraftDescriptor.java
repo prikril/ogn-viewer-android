@@ -8,16 +8,16 @@ import co.uk.rushorm.core.RushObject;
  * CAUTION: moving to other package requires DB migration!!!
  */
 public class CustomAircraftDescriptor extends RushObject {
-    public String address;
+    public String address = "";
 
-    public String regNumber;
-    public String CN;
-    public String owner;
-    public String homeBase;
-    public String model;
-    public String freq;
+    public String regNumber = "";
+    public String CN = "";
+    public String owner = "";
+    public String homeBase = "";
+    public String model = "";
+    public String freq = "";
 
-    boolean favourite;
+    boolean favourite = false;
 
     public CustomAircraftDescriptor() {
     }
@@ -42,6 +42,22 @@ public class CustomAircraftDescriptor extends RushObject {
         this.homeBase = homeBase;
         this.model = model;
         this.freq = freq;
+    }
+
+    public CustomAircraftDescriptor(String csv) {
+        String[] parts = csv.split(",");
+        if (parts.length == 5) {
+            this.address = parts[0];
+
+            this.regNumber = parts[1];
+            this.CN = parts[2];
+            this.owner = parts[3];
+            this.model = parts[4];
+        }
+    }
+
+    public String toCsv() {
+        return this.address + "," + this.regNumber + "," + this.CN + "," + this.owner + "," + this.model;
     }
 
     public boolean isEmpty() {
