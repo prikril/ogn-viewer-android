@@ -1,7 +1,6 @@
 package com.meisterschueler.ognviewer.common;
 
 import android.os.Environment;
-import android.util.Log;
 
 import com.meisterschueler.ognviewer.CustomAircraftDescriptor;
 
@@ -17,16 +16,27 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import co.uk.rushorm.core.RushCore;
 import co.uk.rushorm.core.RushSearch;
+import timber.log.Timber;
 
 public class CustomAircraftDescriptorProvider implements AircraftDescriptorProvider {
 
     private Map<String, CustomAircraftDescriptor> aircraftDescriptorMap = new HashMap<>();
+
+    private final String CSV_ADDRESS_KEY = "Address";
+    private final String CSV_REGNUMBER_KEY = "RegNumber";
+    private final String CSV_COMPETITIONNAME_KEY = "CN";
+    private final String CSV_OWNER_KEY = "Owner";
+    private final String CSV_MODEL_KEY = "Model";
+
 
     public CustomAircraftDescriptorProvider() {
         List<CustomAircraftDescriptor> cads = new RushSearch().find(CustomAircraftDescriptor.class);
@@ -58,46 +68,62 @@ public class CustomAircraftDescriptorProvider implements AircraftDescriptorProvi
 
     public void removeAll() {
         RushCore.getInstance().deleteAll(CustomAircraftDescriptor.class);
-        aircraftDescriptorMap = new HashMap<>();
+        aircraftDescriptorMap.clear();
     }
 
-    public void writeToFile() {
+    public String writeToFile() {
         File dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
+        dir = new File(dir, "ogn");
         if (!dir.exists()) {
-            dir.mkdir();
+            dir.mkdirs();
         }
 
-        File file = new File(dir, "ognviewer_export.csv");
+        String currentTimeString = new SimpleDateFormat("yyyy-MM-dd_HHmmss", Locale.getDefault())
+                .format(Calendar.getInstance().getTime());
+
+        String defaultFilename = "ognviewer_export_" + currentTimeString +".csv";
+
+        File file = new File(dir, defaultFilename);
         try (
                 FileWriter fileWriter = new FileWriter(file);
                 CSVPrinter csvPrinter = new CSVPrinter(fileWriter, CSVFormat.DEFAULT
-                        .withHeader("Address", "RegNumber", "CN", "Owner", "Model"));
+                        .withHeader(CSV_ADDRESS_KEY, CSV_REGNUMBER_KEY, CSV_COMPETITIONNAME_KEY,
+                                CSV_OWNER_KEY, CSV_MODEL_KEY));
         ) {
             for (CustomAircraftDescriptor cad : aircraftDescriptorMap.values()) {
                 csvPrinter.printRecord(cad.address, cad.regNumber, cad.CN, cad.owner, cad.model);
             }
+            return file.getCanonicalPath();
         } catch (IOException ex) {
-            Log.d("WTF", ex.getMessage());
+            Timber.wtf("Error while exporting aircraft to file. " + ex.getMessage());
+            return null;
         }
     }
 
-    public void readFromFile(File file) {
+    public int readFromFile(File file) {
+        int importCount = -1;
         try (
                 FileReader reader = new FileReader(file);
                 CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
-                        .withHeader("Address", "RegNumber", "CN", "Owner", "Model")
+                        .withHeader(CSV_ADDRESS_KEY, CSV_REGNUMBER_KEY, CSV_COMPETITIONNAME_KEY, CSV_OWNER_KEY, CSV_MODEL_KEY)
+                        .withFirstRecordAsHeader()
                         .withIgnoreHeaderCase()
                         .withTrim());
         ) {
+            importCount = 0;
             for (CSVRecord csvRecord : csvParser) {
-                if (!aircraftDescriptorMap.containsKey(csvRecord.get("Address"))) {
-                    CustomAircraftDescriptor cad = new CustomAircraftDescriptor(csvRecord.get("Address"),
-                            csvRecord.get("RegNumber"), csvRecord.get("CN"), csvRecord.get("Owner"), "", csvRecord.get("Model"), "");
+                if (!aircraftDescriptorMap.containsKey(csvRecord.get(CSV_ADDRESS_KEY))) {
+                    CustomAircraftDescriptor cad = new CustomAircraftDescriptor(csvRecord.get(CSV_ADDRESS_KEY),
+                            csvRecord.get(CSV_REGNUMBER_KEY), csvRecord.get(CSV_COMPETITIONNAME_KEY),
+                            csvRecord.get(CSV_OWNER_KEY), "", csvRecord.get(CSV_MODEL_KEY), "");
                     saveCustomAircraftDescriptor(cad);
+                    importCount++;
                 }
             }
+            return importCount;
         } catch (IOException ex) {
-            Log.d("WTF", ex.getMessage());
+            Timber.wtf("Error while importing aircraft from file. " + ex.getMessage());
+            return -1;
         }
     }
     @Override

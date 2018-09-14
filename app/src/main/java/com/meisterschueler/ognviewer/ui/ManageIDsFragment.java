@@ -12,11 +12,13 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import com.meisterschueler.ognviewer.CustomAircraftDescriptor;
 import com.meisterschueler.ognviewer.R;
 import com.meisterschueler.ognviewer.common.AircraftDescriptorProviderHelper;
 import com.meisterschueler.ognviewer.common.CustomAircraftDescriptorProvider;
+import com.meisterschueler.ognviewer.common.FilePathHelper;
 
 import java.io.File;
 import java.util.Map;
@@ -57,7 +59,13 @@ public class ManageIDsFragment extends ListFragment implements AircraftDialogCal
                 break;
 
             case R.id.action_export_items:
-                adp1.writeToFile();
+                String filePath = adp1.writeToFile();
+                if (filePath != null) {
+                    Toast.makeText(getActivity(), "Exported aircraft to " + filePath, Toast.LENGTH_LONG).show();
+                } else {
+                    Toast.makeText(getActivity(), "Error during export.", Toast.LENGTH_LONG).show();
+                }
+
                 break;
 
             case R.id.action_delete_all_items:
@@ -67,6 +75,7 @@ public class ManageIDsFragment extends ListFragment implements AircraftDialogCal
                         switch (which){
                             case DialogInterface.BUTTON_POSITIVE:
                                 adp1.removeAll();
+                                resetListAdapter();
                                 break;
 
                             case DialogInterface.BUTTON_NEGATIVE:
@@ -90,7 +99,14 @@ public class ManageIDsFragment extends ListFragment implements AircraftDialogCal
         super.onActivityResult(requestCode, resultCode, data);
 
         if(requestCode == REQUEST_CODE_IMPORT && resultCode == Activity.RESULT_OK && data != null) {
-            adp1.readFromFile(new File(data.getData().getPath()));
+            int importCount = adp1.readFromFile(new File(FilePathHelper.getPath(getActivity(), data.getData())));
+            if (importCount > -1) {
+                resetListAdapter();
+                Toast.makeText(getActivity(), "Imported " + importCount + " aircraft.", Toast.LENGTH_LONG).show();
+            } else {
+                Toast.makeText(getActivity(), "Error during import.", Toast.LENGTH_LONG).show();
+            }
+
         }
     }
 
@@ -149,4 +165,5 @@ public class ManageIDsFragment extends ListFragment implements AircraftDialogCal
     public void notifyUpdated() {
         resetListAdapter();
     }
+
 }

@@ -16,7 +16,7 @@
         android:id="@+id/column_regNumber"
         android:layout_height="wrap_content"
         android:layout_width="0dp"
-        android:layout_weight="0.5"
+        android:layout_weight="0.6"
         android:text="D-0815" >
     </TextView>
 
