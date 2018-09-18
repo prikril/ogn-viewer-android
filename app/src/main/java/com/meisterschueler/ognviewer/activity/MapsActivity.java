@@ -569,7 +569,7 @@ public class MapsActivity extends BaseActivity implements OnMapReadyCallback,
                     aircraftBeacon.getClimbRate(), aircraftBeacon.getLat(), aircraftBeacon.getLon(),
                     aircraftBeacon.getAlt(), aircraftBeacon.getGroundSpeed(), aircraftDescriptor.getRegNumber(),
                     aircraftDescriptor.getCN(), aircraftDescriptor.getModel(), aircraftBeacon.getReceiverName(),
-                    aircraftBeacon.getTrack(), aircraftBeacon.getTimestamp());
+                    aircraftBeacon.getTrack(), aircraftBeacon.getTimestamp(), aircraftBeacon.getSignalStrength());
         }
 
     }
@@ -589,7 +589,7 @@ public class MapsActivity extends BaseActivity implements OnMapReadyCallback,
     private void updateAircraftBeaconMarkerOnMap(String address, AircraftType aircraftType, float climbRate,
                                             double lat, double lon, float alt, float groundSpeed,
                                             String regNumber, String CN, String model,
-                                            String receiverName, int track, long timestamp) {
+                                            String receiverName, int track, long timestamp, float signalStrength) {
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 
         if (ognService == null) {
@@ -881,7 +881,7 @@ public class MapsActivity extends BaseActivity implements OnMapReadyCallback,
                 //boolean stealth = intent.getBooleanExtra("stealth", false);
                 float climbRate = intent.getFloatExtra("climbRate", 0);
                 //float turnRate = intent.getFloatExtra("turnRate", 0);
-                //float signalStrength = intent.getFloatExtra("signalStrength", 0);
+                float signalStrength = intent.getFloatExtra("signalStrength", 0);
                 //float frequencyOffset = intent.getFloatExtra("frequencyOffset", 0);
                 //String gpsStatus = intent.getStringExtra("gpsStatus");
                 //int errorCount = intent.getIntExtra("errorCount", 0);
@@ -911,7 +911,8 @@ public class MapsActivity extends BaseActivity implements OnMapReadyCallback,
                 boolean isOgnPrivate = known && (!tracked || !identified);
                 if (!isOgnPrivate) {
                     updateAircraftBeaconMarkerOnMap(address, aircraftType, climbRate, lat, lon, alt,
-                            (int) groundSpeed, regNumber, CN, model, receiverName, track, timestamp);
+                            (int) groundSpeed, regNumber, CN, model, receiverName, track, timestamp,
+                            signalStrength);
                 }
             }
         };
