@@ -7,6 +7,8 @@ public class AppConstants {
     public static final int REQUEST_CODE_LOCATION_FILTER = 2468;
     public static final int REQUEST_CODE_LOCATION_TCP_UPDATES = 1122334455;
     public static final int REQUEST_CODE_LOCATION_TCP_UPDATES_FROM_SERVICE = 1234;
+    public static final int REQUEST_CODE_STORAGE_IMPORT = 2018092101;
+    public static final int REQUEST_CODE_STORAGE_EXPORT = 2018092102;
 
     /**
      * after this time inactive aircraft are removed

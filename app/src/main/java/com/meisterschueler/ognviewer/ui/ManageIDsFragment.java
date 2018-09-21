@@ -1,11 +1,15 @@
 package com.meisterschueler.ognviewer.ui;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ListFragment;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -17,6 +21,7 @@ import android.widget.Toast;
 import com.meisterschueler.ognviewer.CustomAircraftDescriptor;
 import com.meisterschueler.ognviewer.R;
 import com.meisterschueler.ognviewer.common.AircraftDescriptorProviderHelper;
+import com.meisterschueler.ognviewer.common.AppConstants;
 import com.meisterschueler.ognviewer.common.CustomAircraftDescriptorProvider;
 import com.meisterschueler.ognviewer.common.FilePathHelper;
 
@@ -52,20 +57,11 @@ public class ManageIDsFragment extends ListFragment implements AircraftDialogCal
                 break;
 
             case R.id.action_import_items:
-                Intent intentImport = new Intent(Intent.ACTION_GET_CONTENT);
-                intentImport.addCategory(Intent.CATEGORY_OPENABLE);
-                intentImport.setType("text/comma-separated-values");
-                startActivityForResult(intentImport, REQUEST_CODE_IMPORT);
+                importItems();
                 break;
 
             case R.id.action_export_items:
-                String filePath = adp1.writeToFile();
-                if (filePath != null) {
-                    Toast.makeText(getActivity(), "Exported aircraft to " + filePath, Toast.LENGTH_LONG).show();
-                } else {
-                    Toast.makeText(getActivity(), "Error during export.", Toast.LENGTH_LONG).show();
-                }
-
+                exportItems();
                 break;
 
             case R.id.action_delete_all_items:
@@ -164,6 +160,41 @@ public class ManageIDsFragment extends ListFragment implements AircraftDialogCal
     @Override
     public void notifyUpdated() {
         resetListAdapter();
+    }
+
+    private boolean checkStoragePermissions(int requestCode) {
+        if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            // Permission is not granted
+            ActivityCompat.requestPermissions(getActivity(),
+                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                    requestCode);
+            return false;
+        }
+
+        return true;
+
+    }
+
+    public void importItems() {
+        if (checkStoragePermissions(AppConstants.REQUEST_CODE_STORAGE_IMPORT)) {
+            Intent intentImport = new Intent(Intent.ACTION_GET_CONTENT);
+            intentImport.addCategory(Intent.CATEGORY_OPENABLE);
+            intentImport.setType("text/comma-separated-values");
+            startActivityForResult(intentImport, REQUEST_CODE_IMPORT);
+        }
+
+    }
+
+    public void exportItems() {
+        if (checkStoragePermissions(AppConstants.REQUEST_CODE_STORAGE_EXPORT)) {
+            String filePath = adp1.writeToFile();
+            if (filePath != null) {
+                Toast.makeText(getActivity(), "Exported aircraft to " + filePath, Toast.LENGTH_LONG).show();
+            } else {
+                Toast.makeText(getActivity(), "Error during export.", Toast.LENGTH_LONG).show();
+            }
+        }
+
     }
 
 }
