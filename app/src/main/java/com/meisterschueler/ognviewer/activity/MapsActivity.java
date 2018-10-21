@@ -676,8 +676,9 @@ public class MapsActivity extends BaseActivity implements OnMapReadyCallback,
             convertedClimbRate = Utils.msToFpm(climbRate);
         }
 
-        String content = String.format(Locale.US,"alt:%d %s, gs:%d %s, vs:%.1f %s, \ntime:%s, rec:%s",
-                convertedAltitude, altitudeUnit, convertedGroudSpeed, gsUnit, convertedClimbRate, vsUnit, humanTime, receiverName);
+        String content = String.format(Locale.US,"alt:%d %s, gs:%d %s, vs:%.1f %s, \ntime:%s, rec:%s (%.1fdB)",
+                convertedAltitude, altitudeUnit, convertedGroudSpeed, gsUnit, convertedClimbRate, vsUnit, humanTime, receiverName,
+                signalStrength);
 
         m.setTitle(title);
         m.setSnippet(content);
