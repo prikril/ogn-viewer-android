@@ -26,6 +26,8 @@ public class FilePathHelper {
 
                 if ("primary".equalsIgnoreCase(type)) {
                     return Environment.getExternalStorageDirectory() + "/" + split[1];
+                } else if ("home".equalsIgnoreCase(type)) {
+                    return Environment.getExternalStorageDirectory() + "/Documents/" + split[1];
                 }
                 // TODO handle non-primary volumes
             }
