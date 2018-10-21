@@ -1,5 +1,9 @@
 # OGN Viewer Release Notes
 
+## 1.4.0
+* New: import/export IDs (file format: csv)
+* Rised minimum API level from 15 to 19 (Android 4.0.4 -> 4.4)
+
 ## 1.3.9
 * New: multicolor flight path (see settings)
 * New: screen orientation setting

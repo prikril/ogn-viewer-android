@@ -31,7 +31,7 @@ public enum AircraftDescriptorProviderHelper {
     private static OgnClient createClient(AircraftDescriptorProvider... aircraftDescriptorProviders) {
         //String versionName = getPackageManager().getPackageInfo(getPackageName(), 0).versionName; //TODO: find a workaround 2018-08-26
         return OgnClientFactory.getBuilder().descriptorProviders(Arrays.asList(aircraftDescriptorProviders))
-                .appName("ogn-viewer").appVersion("1.3.9").build();
+                .appName("ogn-viewer").appVersion("1.4.0").build();
     }
 
 }

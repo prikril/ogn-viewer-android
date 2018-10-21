@@ -9,7 +9,7 @@ This app is a flight radar for small aircraft with FLARM equipment.
 
 The decoded signals can be used with apps like XCSoar on TCP port 4353.
 
-Current version: 1.3.9
+Current version: 1.4.0
 
 See [release notes](release-notes.md) for details.
 
