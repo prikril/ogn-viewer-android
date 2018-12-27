@@ -5,6 +5,7 @@ import android.location.Location;
 
 import com.meisterschueler.ognviewer.common.AppConstants;
 import com.meisterschueler.ognviewer.common.FlarmMessage;
+import com.meisterschueler.ognviewer.common.FlarmMessagePFLAUSenderTask;
 import com.meisterschueler.ognviewer.common.FlarmMessageSenderTask;
 
 import java.io.IOException;
@@ -41,6 +42,7 @@ public class TcpServer {
                         }
                     } else {
                         try {
+                            new FlarmMessagePFLAUSenderTask(clientSocket).execute();
                             Thread.sleep(1000);
                         } catch (InterruptedException e) {
                             e.printStackTrace();

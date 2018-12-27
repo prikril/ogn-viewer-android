@@ -1,5 +1,8 @@
 # OGN Viewer Release Notes
 
+## 1.4.1
+* Improved: TCP server also available for LK8000 (issue #17)
+
 ## 1.4.0
 * New: import/export IDs (file format: csv)
 * Rised minimum API level from 15 to 19 (Android 4.0.4 -> 4.4)
