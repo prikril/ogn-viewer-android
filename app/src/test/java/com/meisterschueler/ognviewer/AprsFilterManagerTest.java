@@ -5,6 +5,7 @@ import com.meisterschueler.ognviewer.common.AprsFilterManager;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 public class AprsFilterManagerTest {
 
@@ -32,5 +33,11 @@ public class AprsFilterManagerTest {
         assertEquals(result.getLat(), 52.0, DELTA);
         assertEquals(result.getLon(), -0.500, DELTA);
         assertEquals(result.getRadius(), 100.0, DELTA);
+    }
+
+    @Test
+    public void invalidFloat() {
+        AprsFilterManager.Circle result = AprsFilterManager.parse("r//13/100");
+        assertNull(result);
     }
 }

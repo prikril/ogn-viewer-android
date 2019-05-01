@@ -6,7 +6,7 @@ import java.util.regex.Pattern;
 
 public class AprsFilterManager {
     public static Circle parse(String aprs_filter) {
-        String re_float = "[+-]?\\d*\\.?\\d*";
+        String re_float = "[+-]?((\\d+\\.?\\d*)|(\\.\\d+))";
         String re_range = "^r/(" + re_float + ")/(" + re_float + ")/(" + re_float + ")$";
 
         Pattern pattern = Pattern.compile(re_range);
@@ -16,8 +16,8 @@ public class AprsFilterManager {
         if (matcher.matches()) {
             result = new Circle();
             result.lat = Double.parseDouble(matcher.group(1));
-            result.lon = Double.parseDouble(matcher.group(2));
-            result.radius = Double.parseDouble(matcher.group(3));
+            result.lon = Double.parseDouble(matcher.group(5));
+            result.radius = Double.parseDouble(matcher.group(9));
         }
 
         return result;
