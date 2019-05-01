@@ -516,7 +516,7 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
                     timerCurrentlyRunning = true;
                     Timber.d("Update map by timer at " + new Date());
                 }
-                aircraftMap = convertAricraftMap(aircraftBundleMap);
+                aircraftMap = convertAircraftMap(aircraftBundleMap);
                 Iterator<String> it = aircraftMap.keySet().iterator();
                 while (it.hasNext()) {
                     String address = it.next();
@@ -580,7 +580,7 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
         Timber.d("Service paused updating map");
     }
 
-    private Map<String, Aircraft> convertAricraftMap(Map<String, AircraftBundle> aircraftBundleMap) {
+    private Map<String, Aircraft> convertAircraftMap(Map<String, AircraftBundle> aircraftBundleMap) {
         Map<String, Aircraft> resultMap = new HashMap<>();
         for (String address : aircraftBundleMap.keySet()) {
             AircraftBundle bundle = aircraftBundleMap.get(address);
