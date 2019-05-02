@@ -26,6 +26,8 @@ public class PrefsFragment extends PreferenceFragment implements SharedPreferenc
 
         SharedPreferences sharedPreferences = getPreferenceScreen().getSharedPreferences();
 
+        updateFragmentValues(sharedPreferences, getString(R.string.key_movingfilter_preference));
+        updateFragmentValues(sharedPreferences, getString(R.string.key_movingfilter_range_preference));
         updateFragmentValues(sharedPreferences, getString(R.string.key_aprsfilter_preference));
         updateFragmentValues(sharedPreferences, getString(R.string.key_showaircrafts_preference));
         updateFragmentValues(sharedPreferences, getString(R.string.key_showreceivers_preference));
@@ -61,7 +63,9 @@ public class PrefsFragment extends PreferenceFragment implements SharedPreferenc
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
         updateFragmentValues(sharedPreferences, key);
-        if (key.equals(getString(R.string.key_aprsfilter_preference))) {
+        if (key.equals(getString(R.string.key_aprsfilter_preference))
+                | key.equals(getString(R.string.key_movingfilter_preference))
+                | key.equals(getString(R.string.key_movingfilter_range_preference))) {
             getActivity().startService(new Intent(getActivity(), OgnService.class));
         } else if (key.equals(getString(R.string.key_tcp_server_active_preference))) {
             Boolean value = sharedPreferences.getBoolean(getString(R.string.key_tcp_server_active_preference), false);
@@ -76,7 +80,21 @@ public class PrefsFragment extends PreferenceFragment implements SharedPreferenc
     private void updateFragmentValues(SharedPreferences sharedPreferences, String key) {
         Preference pref = findPreference(key);
 
-        if (key.equals(getString(R.string.key_aprsfilter_preference))) {
+        if (key.equals(getString(R.string.key_movingfilter_preference))) {
+            Boolean value = sharedPreferences.getBoolean(getString(R.string.key_movingfilter_preference), true);
+            if (value) {
+                pref.setSummary("on");
+                findPreference(getString(R.string.key_movingfilter_range_preference)).setEnabled(true);
+                findPreference(getString(R.string.key_aprsfilter_preference)).setEnabled(false);
+            } else {
+                pref.setSummary("off");
+                findPreference(getString(R.string.key_movingfilter_range_preference)).setEnabled(false);
+                findPreference(getString(R.string.key_aprsfilter_preference)).setEnabled(true);
+            }
+        } else if (key.equals(getString(R.string.key_movingfilter_range_preference))) {
+            String value = sharedPreferences.getString(getString(R.string.key_movingfilter_range_preference), getString(R.string.distance_10km));
+            pref.setSummary(value);
+        } else if (key.equals(getString(R.string.key_aprsfilter_preference))) {
             String value = sharedPreferences.getString(getString(R.string.key_aprsfilter_preference), "");
             if (value.isEmpty()) {
                 pref.setSummary(getString(R.string.empty_aprsfilter_preference));

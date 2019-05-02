@@ -72,6 +72,20 @@
         <item>@string/time_1h</item>
     </string-array>
 
+    <string-array name="entries_movingfilter_range_preference">
+        <item>@string/distance_10km</item>
+        <item>@string/distance_25km</item>
+        <item>@string/distance_50km</item>
+        <item>@string/distance_100km</item>
+    </string-array>
+
+    <string-array name="entryvalues_movingfilter_range_preference">
+        <item>@string/distance_10km</item>
+        <item>@string/distance_25km</item>
+        <item>@string/distance_50km</item>
+        <item>@string/distance_100km</item>
+    </string-array>
+
     <string-array name="entries_receiver_colorisation_preference">
         <item>@string/aircraft_count</item>
         <item>@string/beacon_count</item>

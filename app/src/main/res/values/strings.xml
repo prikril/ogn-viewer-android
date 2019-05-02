@@ -32,12 +32,21 @@
     <string name="empty_frequency">(no frequency)</string>
 
     <string name="key_aprsfilter_preference">aprsfilter_preference</string>
-    <string name="title_aprsfilter_preference">APRS filter</string>
+    <string name="title_aprsfilter_preference">Manual filter</string>
     <string name="summary_aprsfilter_preference">Type here your stuff</string>
     <string name="dialog_title_aprsfilter_preference">APRS filter</string>
     <string name="empty_aprsfilter_preference">(empty)</string>
 
     <!-- Settings/Preferences -->
+    <string name="key_movingfilter_preference">movingfilter_preference</string>
+    <string name="title_movingfilter_preference">Moving APRS filter</string>
+    <string name="summary_movingfilter_preference">Type here your stuff</string>
+
+    <string name="key_movingfilter_range_preference">movingfilter_range_preference</string>
+    <string name="title_movingfilter_range_preference">Moving filter range</string>
+    <string name="summary_movingfilter_range_preference">Type here your stuff</string>
+    <string name="dialog_title_movingfilter_range_preference">Map type</string>
+
     <string name="key_showaircrafts_preference">showaircrafts_preference</string>
     <string name="title_showaircrafts_preference">Show Aircraft</string>
     <string name="summary_showaircrafts_preference">on</string>
@@ -136,6 +145,11 @@
     <string name="time_10m">10 min</string>
     <string name="time_30m">30 min</string>
     <string name="time_1h">1 h</string>
+
+    <string name="distance_10km">10km</string>
+    <string name="distance_25km">25km</string>
+    <string name="distance_50km">50km</string>
+    <string name="distance_100km">100km</string>
 
     <string name="unit_meters">m</string>
     <string name="unit_feet">ft</string>

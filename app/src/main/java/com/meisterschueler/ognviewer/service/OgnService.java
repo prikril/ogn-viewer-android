@@ -9,6 +9,7 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Binder;
 import android.os.Build;
@@ -31,6 +32,7 @@ import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.SettingsClient;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
+import com.meisterschueler.ognviewer.CustomAircraftDescriptor;
 import com.meisterschueler.ognviewer.R;
 import com.meisterschueler.ognviewer.activity.ClosingActivity;
 import com.meisterschueler.ognviewer.activity.MapsActivity;
@@ -41,7 +43,6 @@ import com.meisterschueler.ognviewer.common.ReceiverBeaconImplReplacement;
 import com.meisterschueler.ognviewer.common.ReceiverBundle;
 import com.meisterschueler.ognviewer.common.entity.Aircraft;
 import com.meisterschueler.ognviewer.common.entity.AircraftBundle;
-import com.meisterschueler.ognviewer.CustomAircraftDescriptor;
 
 import org.ogn.client.AircraftBeaconListener;
 import org.ogn.client.OgnClient;
@@ -416,7 +417,17 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        String aprs_filter = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getString(getString(R.string.key_aprsfilter_preference), "");
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        String manual_filter = sharedPreferences.getString(getString(R.string.key_aprsfilter_preference), "");
+        Boolean moving_filter = sharedPreferences.getBoolean(getString(R.string.key_movingfilter_preference), true);
+        String moving_filter_range = sharedPreferences.getString(getString(R.string.key_movingfilter_range_preference), getString(R.string.distance_10km));
+
+        String aprs_filter;
+        if (moving_filter) {
+            aprs_filter = "moving_filter";
+        } else {
+            aprs_filter = manual_filter;
+        }
 
         if (ognConnected) {
             ognClient.disconnect();
