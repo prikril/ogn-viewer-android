@@ -1,5 +1,8 @@
 # OGN Viewer Release Notes
 
+## 1.4.2
+* Bugfix: Crash with bad APRS filter (issue #20)
+
 ## 1.4.1
 * Improved: TCP server also available for LK8000 (issue #17)
 
