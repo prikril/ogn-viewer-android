@@ -37,6 +37,12 @@
     <string name="dialog_title_aprsfilter_preference">APRS filter</string>
     <string name="empty_aprsfilter_preference">(empty)</string>
 
+    <string name="key_aprsserver_preference">aprsserver_preference</string>
+    <string name="title_aprsserver_preference">APRS server</string>
+    <string name="summary_aprsserver_preference">Type here your stuff</string>
+    <string name="dialog_title_aprsserver_preference">APRS server</string>
+    <string name="empty_aprsserver_preference">(empty)</string>
+
     <!-- Settings/Preferences -->
     <string name="key_movingfilter_preference">movingfilter_preference</string>
     <string name="title_movingfilter_preference">Moving APRS filter</string>
@@ -124,6 +130,8 @@
     <string name="dialog_title_tcp_server_active_preference">TCP Server</string>
 
     <!-- Entry keys and values of arrays -->
+    <string name="default_aprsserver">aprs.glidernet.org</string>
+
     <string name="terrain">Terrain</string>
     <string name="hybrid">Hybrid</string>
     <string name="satellite">Satellite</string>

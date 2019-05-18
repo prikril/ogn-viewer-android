@@ -23,8 +23,12 @@ public class AprsFilterManager {
         return result;
     }
 
+    public static String latLngToAprsFilter(double lat, double lon, double radius) {
+        return String.format(Locale.US, "r/%1$.3f/%2$.3f/%3$.1f", lat, lon, radius);
+    }
+
     public static String latLngToAprsFilter(double lat, double lon) {
-        return String.format(Locale.US, "r/%1$.3f/%2$.3f/%3$.1f", lat, lon, 100.0);
+        return latLngToAprsFilter(lat, lon, AppConstants.DEFAULT_APRS_FILTER_RADIUS);
     }
 
     public static class Circle {

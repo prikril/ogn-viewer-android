@@ -29,6 +29,7 @@ public class PrefsFragment extends PreferenceFragment implements SharedPreferenc
         updateFragmentValues(sharedPreferences, getString(R.string.key_movingfilter_preference));
         updateFragmentValues(sharedPreferences, getString(R.string.key_movingfilter_range_preference));
         updateFragmentValues(sharedPreferences, getString(R.string.key_aprsfilter_preference));
+        updateFragmentValues(sharedPreferences, getString(R.string.key_aprsserver_preference));
         updateFragmentValues(sharedPreferences, getString(R.string.key_showaircrafts_preference));
         updateFragmentValues(sharedPreferences, getString(R.string.key_showreceivers_preference));
         updateFragmentValues(sharedPreferences, getString(R.string.key_map_type_preference));
@@ -64,6 +65,7 @@ public class PrefsFragment extends PreferenceFragment implements SharedPreferenc
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
         updateFragmentValues(sharedPreferences, key);
         if (key.equals(getString(R.string.key_aprsfilter_preference))
+                | key.equals(getString(R.string.key_aprsserver_preference))
                 | key.equals(getString(R.string.key_movingfilter_preference))
                 | key.equals(getString(R.string.key_movingfilter_range_preference))) {
             getActivity().startService(new Intent(getActivity(), OgnService.class));
@@ -98,6 +100,13 @@ public class PrefsFragment extends PreferenceFragment implements SharedPreferenc
             String value = sharedPreferences.getString(getString(R.string.key_aprsfilter_preference), "");
             if (value.isEmpty()) {
                 pref.setSummary(getString(R.string.empty_aprsfilter_preference));
+            } else {
+                pref.setSummary(value);
+            }
+        } else if (key.equals(getString(R.string.key_aprsserver_preference))) {
+            String value = sharedPreferences.getString(getString(R.string.key_aprsserver_preference), getString(R.string.default_aprsserver));
+            if (value.isEmpty()) {
+                pref.setSummary(getString(R.string.default_aprsserver));
             } else {
                 pref.setSummary(value);
             }

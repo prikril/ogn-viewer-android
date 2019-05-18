@@ -60,5 +60,9 @@ public class AppConstants {
      */
     public static final float MAX_ALT_FOR_COLORATION = 3000.0f;
 
+    /**
+     * default aprs filter radius in km
+     */
+    public static final float DEFAULT_APRS_FILTER_RADIUS = 100.0f;
 
 }

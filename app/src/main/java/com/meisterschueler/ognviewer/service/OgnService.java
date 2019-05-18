@@ -11,6 +11,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.location.Location;
 import android.os.Binder;
 import android.os.Build;
 import android.os.IBinder;
@@ -38,6 +39,8 @@ import com.meisterschueler.ognviewer.activity.ClosingActivity;
 import com.meisterschueler.ognviewer.activity.MapsActivity;
 import com.meisterschueler.ognviewer.common.AircraftDescriptorProviderHelper;
 import com.meisterschueler.ognviewer.common.AppConstants;
+import com.meisterschueler.ognviewer.common.AprsFilterManager;
+import com.meisterschueler.ognviewer.common.CustomAircraftDescriptorProvider;
 import com.meisterschueler.ognviewer.common.FlarmMessage;
 import com.meisterschueler.ognviewer.common.ReceiverBeaconImplReplacement;
 import com.meisterschueler.ognviewer.common.ReceiverBundle;
@@ -95,6 +98,9 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
     private FusedLocationProviderClient fusedLocationProviderClient;
     private LocationCallback locationCallback;
 
+    private CustomAircraftDescriptorProvider customAircraftDescriptorProvider;
+    private float movingFilterUpdateDistance = 0;
+    private Location movingFilterLocation = null;
 
     public Map<String, ReceiverBundle> getReceiverBundleMap() {
         return receiverBundleMap;
@@ -179,7 +185,11 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
             locationCallback = new LocationCallback() {
                 @Override
                 public void onLocationResult(LocationResult locationResult) {
-                    tcpServer.updatePosition(locationResult.getLastLocation());
+                    Location lastLocation = locationResult.getLastLocation();
+                    tcpServer.updatePosition(lastLocation);
+                    if (movingFilterLocation == null || lastLocation.distanceTo(movingFilterLocation) > 1000) {
+                        movingFilterLocation = lastLocation;
+                    }
                 }
             };
         }
@@ -418,33 +428,57 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        String aprs_server = sharedPreferences.getString(getString(R.string.key_aprsserver_preference), "");
         String manual_filter = sharedPreferences.getString(getString(R.string.key_aprsfilter_preference), "");
         Boolean moving_filter = sharedPreferences.getBoolean(getString(R.string.key_movingfilter_preference), true);
         String moving_filter_range = sharedPreferences.getString(getString(R.string.key_movingfilter_range_preference), getString(R.string.distance_10km));
 
-        String aprs_filter;
-        if (moving_filter) {
-            aprs_filter = "moving_filter";
-        } else {
-            aprs_filter = manual_filter;
+        if (aprs_server.isEmpty()) {
+            aprs_server = getString(R.string.default_aprsserver);
         }
 
         if (ognConnected) {
             ognClient.disconnect();
         } else {
-            ognClient = AircraftDescriptorProviderHelper.getOgnClient();
+            ognClient = AircraftDescriptorProviderHelper.getOgnClient(aprs_server);
             ognClient.subscribeToAircraftBeacons(this);
             ognClient.subscribeToReceiverBeacons(this);
+            customAircraftDescriptorProvider = (CustomAircraftDescriptorProvider)AircraftDescriptorProviderHelper.getCustomDbAircraftDescriptorProvider();
         }
+
+        String aprs_filter;
+        if (moving_filter) {
+            if (movingFilterLocation != null) {
+                String range_filter = AprsFilterManager.latLngToAprsFilter(movingFilterLocation.getLatitude(), movingFilterLocation.getLongitude(), 10);
+                String buddy_filter = customAircraftDescriptorProvider.getAprsBudlistFilter();
+                aprs_filter = range_filter + " " + buddy_filter;
+            } else {
+                aprs_filter = manual_filter;
+            }
+
+        } else {
+            aprs_filter = manual_filter;
+        }
+
+        ognClient = AircraftDescriptorProviderHelper.getOgnClient(aprs_server);
+        ognClient.subscribeToAircraftBeacons(this);
+        ognClient.subscribeToReceiverBeacons(this);
 
         if (aprs_filter.isEmpty()) {
             ognClient.connect();
             ognConnected = true;
-            Toast.makeText(this, "Connected to OGN without filter", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Connected to " + aprs_server + " without filter", Toast.LENGTH_LONG).show();
         } else {
             ognClient.connect(aprs_filter);
             ognConnected = true;
-            Toast.makeText(this, "Connected to OGN. Filter: " + aprs_filter, Toast.LENGTH_LONG).show();
+
+            String filter;
+            if (aprs_filter.length() > 30) {
+                filter = aprs_filter.substring(0, 30) + "...";
+            } else {
+                filter = aprs_filter;
+            }
+            Toast.makeText(this, "Connected to OGN. Filter: " + filter, Toast.LENGTH_LONG).show();
         }
 
         if (refreshingActive) {

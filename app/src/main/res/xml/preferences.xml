@@ -28,6 +28,14 @@
             android:hint="@string/empty_aprsfilter_preference"
             android:defaultValue=""/>
 
+        <EditTextPreference
+            android:key="@string/key_aprsserver_preference"
+            android:title="@string/title_aprsserver_preference"
+            android:summary="@string/summary_aprsserver_preference"
+            android:dialogTitle="@string/dialog_title_aprsserver_preference"
+            android:hint="@string/empty_aprsserver_preference"
+            android:defaultValue="@string/default_aprsserver"/>
+
     </PreferenceCategory>
 
 
