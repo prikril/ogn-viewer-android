@@ -14,7 +14,6 @@ public enum AircraftDescriptorProviderHelper {
 
     private static final AircraftDescriptorProvider adp1 = new CustomAircraftDescriptorProvider();
     private static final AircraftDescriptorProvider adp2 = new FileDbDescriptorProvider<>(OgnDb.class);
-    private static final OgnClient ognClient = createClient(adp1, adp2);
 
     public static final AircraftDescriptorProvider getCustomDbAircraftDescriptorProvider() {
         return adp1;
@@ -24,14 +23,9 @@ public enum AircraftDescriptorProviderHelper {
         return adp2;
     }
 
-    public static final OgnClient getOgnClient() {
-        return ognClient;
-    }
-
-    private static OgnClient createClient(AircraftDescriptorProvider... aircraftDescriptorProviders) {
+    public static final OgnClient getOgnClient(String serverName) {
         //String versionName = getPackageManager().getPackageInfo(getPackageName(), 0).versionName; //TODO: find a workaround 2018-08-26
-        return OgnClientFactory.getBuilder().descriptorProviders(Arrays.asList(aircraftDescriptorProviders))
-                .appName("ogn-viewer").appVersion("1.4.2").build();
+        return OgnClientFactory.getBuilder().descriptorProviders(Arrays.asList(adp1, adp2))
+                .serverName(serverName).appName("ogn-wtf").appVersion("1.4.2").build();
     }
-
 }
