@@ -10,6 +10,12 @@ public class AppConstants {
     public static final int REQUEST_CODE_STORAGE_IMPORT = 2018092101;
     public static final int REQUEST_CODE_STORAGE_EXPORT = 2018092102;
 
+    // Intents
+    public static final String INTENT_AIRCRAFT_BEACON = "AIRCRAFT-BEACON";
+    public static final String INTENT_RECEIVER_BEACON = "RECEIVER-BEACON";
+    public static final String INTENT_AIRCRAFT_ACTION = "AIRCRAFT_ACTION";
+    public static final String INTENT_LOCATION = "LOCATION";
+
     /**
      * after this time inactive aircraft are removed
      */

@@ -47,6 +47,7 @@
     <string name="key_movingfilter_preference">movingfilter_preference</string>
     <string name="title_movingfilter_preference">Moving APRS filter</string>
     <string name="summary_movingfilter_preference">Type here your stuff</string>
+    <string name="toast_movingfilter_preference">Moving filter is active</string>
 
     <string name="key_movingfilter_range_preference">movingfilter_range_preference</string>
     <string name="title_movingfilter_range_preference">Moving filter range</string>

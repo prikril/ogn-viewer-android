@@ -98,8 +98,10 @@ public class MapsActivity extends BaseActivity implements OnMapReadyCallback,
 
     private OgnService ognService;
     private Circle rangeCircle;
+    private LatLng currentLocation;
     private BroadcastReceiver aircraftReceiver;
     private BroadcastReceiver receiverReceiver;
+    private BroadcastReceiver locationReceiver;
     private BroadcastReceiver actionReceiver;
     private Map<String, Marker> aircraftMarkerMap = new HashMap<>();
     private Map<String, String> aircraftMarkerAddressMap = new HashMap<>(); // marker id to aircraft address
@@ -189,8 +191,7 @@ public class MapsActivity extends BaseActivity implements OnMapReadyCallback,
             //aprs filter
             //String message = data.getStringExtra("MESSAGE"); //leave this for future usage
             SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-            String aprsFilter = sharedPreferences.getString(getString(R.string.key_aprsfilter_preference), "");
-            updateAprsFilterRange(aprsFilter);
+            updateRangeCircle();
 
             //map type
             changeMapType();
@@ -360,10 +361,11 @@ public class MapsActivity extends BaseActivity implements OnMapReadyCallback,
 
     private void changeTCPServerState() {
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-        Boolean active = sharedPreferences.getBoolean(getString(R.string.key_tcp_server_active_preference), false);
+        Boolean tcpServerActive = sharedPreferences.getBoolean(getString(R.string.key_tcp_server_active_preference), false);
+        Boolean movingFilterActive = sharedPreferences.getBoolean(getString(R.string.key_movingfilter_preference), true);
 
         if (ognService != null) {
-            if (active) {
+            if (tcpServerActive | movingFilterActive) {
                 ognService.startLocationUpdates(this);
             } else {
                 ognService.stopLocationUpdates();
@@ -863,8 +865,7 @@ public class MapsActivity extends BaseActivity implements OnMapReadyCallback,
 
         checkSetUpMap();
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-        String aprsFilter = sharedPreferences.getString(getString(R.string.key_aprsfilter_preference), "");
-        updateAprsFilterRange(aprsFilter); //necessary for the circle, because it was erased in onPause
+        updateRangeCircle(); //necessary for the circle, because it was erased in onPause
         //resumeUpdatingMap(); // do not resume here, it will be resumed after known markers are restored
 
         registerBroadcastReceivers();
@@ -917,7 +918,7 @@ public class MapsActivity extends BaseActivity implements OnMapReadyCallback,
                 }
             }
         };
-        LocalBroadcastManager.getInstance(this).registerReceiver((aircraftReceiver), new IntentFilter("AIRCRAFT-BEACON"));
+        LocalBroadcastManager.getInstance(this).registerReceiver((aircraftReceiver), new IntentFilter(AppConstants.INTENT_AIRCRAFT_BEACON));
 
         receiverReceiver = new BroadcastReceiver() {
             @Override
@@ -947,7 +948,7 @@ public class MapsActivity extends BaseActivity implements OnMapReadyCallback,
                 }
             }
         };
-        LocalBroadcastManager.getInstance(this).registerReceiver((receiverReceiver), new IntentFilter("RECEIVER-BEACON"));
+        LocalBroadcastManager.getInstance(this).registerReceiver((receiverReceiver), new IntentFilter(AppConstants.INTENT_RECEIVER_BEACON));
 
         //action receiver for receiving commands from ognService
         actionReceiver = new BroadcastReceiver() {
@@ -962,7 +963,18 @@ public class MapsActivity extends BaseActivity implements OnMapReadyCallback,
                 }
             }
         };
-        LocalBroadcastManager.getInstance(this).registerReceiver((actionReceiver), new IntentFilter("AIRCRAFT_ACTION"));
+        LocalBroadcastManager.getInstance(this).registerReceiver((actionReceiver), new IntentFilter(AppConstants.INTENT_AIRCRAFT_ACTION));
+
+        locationReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                double lat = intent.getDoubleExtra("lat", 0);
+                double lon = intent.getDoubleExtra("lon", 0);
+                currentLocation = new LatLng(lat, lon);
+            }
+        };
+        LocalBroadcastManager.getInstance(this).registerReceiver((locationReceiver), new IntentFilter(AppConstants.INTENT_LOCATION));
+
     }
 
     @Override
@@ -1007,8 +1019,14 @@ public class MapsActivity extends BaseActivity implements OnMapReadyCallback,
         mMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
             @Override
             public void onMapLongClick(LatLng latLng) {
-                String aprsFilter = AprsFilterManager.latLngToAprsFilter(latLng.latitude, latLng.longitude);
-                editAprsFilter(aprsFilter);
+                SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+                Boolean movingFilterActive = sharedPreferences.getBoolean(getString(R.string.key_movingfilter_preference), true);
+                if (movingFilterActive) {
+                    Toast.makeText(getApplicationContext(), getString(R.string.toast_movingfilter_preference), Toast.LENGTH_LONG).show();
+                } else {
+                    String aprsFilter = AprsFilterManager.latLngToAprsFilter(latLng.latitude, latLng.longitude);
+                    editAprsFilter(aprsFilter);
+                }
             }
         });
 
@@ -1082,24 +1100,38 @@ public class MapsActivity extends BaseActivity implements OnMapReadyCallback,
         sharedPreferences.edit().putString(getString(R.string.key_aprsfilter_preference), aprsFilterModified).apply();
         startService(new Intent(getBaseContext(), OgnService.class));
         //resumeUpdatingMap is called within OgnService onStartCommand, don't call it here! async!
-        updateAprsFilterRange(aprsFilterModified);
+        updateRangeCircle();
     }
 
-    private void updateAprsFilterRange(String aprsFilter) {
+    private void updateRangeCircle() {
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        String manualFilter = sharedPreferences.getString(getString(R.string.key_aprsfilter_preference), "");
+        Boolean movingFilterActive = sharedPreferences.getBoolean(getString(R.string.key_movingfilter_preference), true);
+
         if (rangeCircle == null) {
             if (mMap == null) {
                 return;
             } else {
-                rangeCircle = mMap.addCircle(new CircleOptions().center(new LatLng(0, 0)).radius(1).strokeColor(Color.RED));
+                rangeCircle = mMap.addCircle(new CircleOptions().center(new LatLng(0, 0)).radius(1));
             }
         }
         rangeCircle.setVisible(false);
 
-        AprsFilterManager.Circle circle = AprsFilterManager.parse(aprsFilter);
-        if (circle != null) {
-            rangeCircle.setCenter(new LatLng(circle.getLat(), circle.getLon()));
-            rangeCircle.setRadius(circle.getRadius() * 1000);
-            rangeCircle.setVisible(true);
+        if (movingFilterActive) {
+            if (currentLocation != null) {
+                rangeCircle.setCenter(currentLocation);
+                rangeCircle.setRadius(50000);
+                rangeCircle.setStrokeColor(Color.RED);
+                rangeCircle.setVisible(true);
+            }
+        } else {
+            AprsFilterManager.Circle circle = AprsFilterManager.parse(manualFilter);
+            if (circle != null) {
+                rangeCircle.setCenter(new LatLng(circle.getLat(), circle.getLon()));
+                rangeCircle.setRadius(circle.getRadius() * 1000);
+                rangeCircle.setStrokeColor(Color.RED);
+                rangeCircle.setVisible(true);
+            }
         }
     }
 
@@ -1175,9 +1207,7 @@ public class MapsActivity extends BaseActivity implements OnMapReadyCallback,
                                               return false; // must be false, otherwise infoWindow is not shown
                                           }
                                       });
-
-        String aprsFilter = sharedPreferences.getString(getString(R.string.key_aprsfilter_preference), "");
-        updateAprsFilterRange(aprsFilter);
+        updateRangeCircle();
     }
 
     @Override

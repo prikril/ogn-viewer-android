@@ -99,7 +99,7 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
     private LocationCallback locationCallback;
 
     private CustomAircraftDescriptorProvider customAircraftDescriptorProvider;
-    private float movingFilterUpdateDistance = 0;
+    private Location currentLocation = null;
     private Location movingFilterLocation = null;
 
     public Map<String, ReceiverBundle> getReceiverBundleMap() {
@@ -185,10 +185,11 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
             locationCallback = new LocationCallback() {
                 @Override
                 public void onLocationResult(LocationResult locationResult) {
-                    Location lastLocation = locationResult.getLastLocation();
-                    tcpServer.updatePosition(lastLocation);
-                    if (movingFilterLocation == null || lastLocation.distanceTo(movingFilterLocation) > 1000) {
-                        movingFilterLocation = lastLocation;
+                    currentLocation = locationResult.getLastLocation();
+                    tcpServer.updatePosition(currentLocation);
+                    if (movingFilterLocation == null || movingFilterLocation.distanceTo(currentLocation) > 5000) {
+                        movingFilterLocation = currentLocation;
+                        restartAprsClient();
                     }
                 }
             };
@@ -252,7 +253,7 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
     private boolean sendAircraftToMap(AircraftBundle aircraftBundle) {
         AircraftBeacon aircraftBeacon = aircraftBundle.aircraftBeacon;
         AircraftDescriptor aircraftDescriptor = aircraftBundle.aircraftDescriptor;
-        Intent intent = new Intent("AIRCRAFT-BEACON");
+        Intent intent = new Intent(AppConstants.INTENT_AIRCRAFT_BEACON);
 
         // AircraftBeacon
         intent.putExtra("receiverName", aircraftBeacon.getReceiverName());
@@ -299,6 +300,20 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
         }
     }
 
+    private boolean sendLocationToMap(Location location) {
+        Intent intent = new Intent(AppConstants.INTENT_LOCATION);
+
+        intent.putExtra("lat", location.getLatitude());
+        intent.putExtra("lon", location.getLongitude());
+
+        if (!mapCurrentlyUpdating) { //check if something is updating the map currently
+            localBroadcastManager.sendBroadcast(intent);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     @Override
     public void onUpdate(ReceiverBeacon receiverBeacon) {
         //CAUTION: onUpdate(ReceiverBeacon) is called two times
@@ -315,7 +330,7 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
 
         receiverBundleMap.put(receiverBeacon.getId(), bundle);
 
-        Intent intent = new Intent("RECEIVER-BEACON");
+        Intent intent = new Intent(AppConstants.INTENT_RECEIVER_BEACON);
 
         // ReceiverBeacon
         //intent.putExtra("cpuLoad", receiverBeacon.getCpuLoad());
@@ -425,8 +440,7 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
         }
     }
 
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
+    private void restartAprsClient() {
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         String aprs_server = sharedPreferences.getString(getString(R.string.key_aprsserver_preference), "");
         String manual_filter = sharedPreferences.getString(getString(R.string.key_aprsfilter_preference), "");
@@ -448,8 +462,8 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
 
         String aprs_filter;
         if (moving_filter) {
-            if (movingFilterLocation != null) {
-                String range_filter = AprsFilterManager.latLngToAprsFilter(movingFilterLocation.getLatitude(), movingFilterLocation.getLongitude(), 10);
+            if (currentLocation != null) {
+                String range_filter = AprsFilterManager.latLngToAprsFilter(currentLocation.getLatitude(), currentLocation.getLongitude(), 10);
                 String buddy_filter = customAircraftDescriptorProvider.getAprsBudlistFilter();
                 aprs_filter = range_filter + " " + buddy_filter;
             } else {
@@ -480,7 +494,11 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
             }
             Toast.makeText(this, "Connected to OGN. Filter: " + filter, Toast.LENGTH_LONG).show();
         }
+    }
 
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        restartAprsClient();
         if (refreshingActive) {
             //this happens only when applyModifiedFilter in MapsActivity is called
             resumeUpdatingMap(this.latLngBounds);
@@ -570,7 +588,7 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
                     long diffSeconds = (now.getTime() - aircraftMap.get(address).getLastSeen().getTime()) / 1000;
                     // remove markers that are older than specified time e.g. 60 seconds to clean map
                     if (diffSeconds > aircraftTimeoutInSec) {
-                        Intent intent = new Intent("AIRCRAFT_ACTION");
+                        Intent intent = new Intent(AppConstants.INTENT_AIRCRAFT_ACTION);
                         //intent.setAction("REMOVE_AIRCRAFT");
                         intent.putExtra("AIRCRAFT_ACTION", "REMOVE_AIRCRAFT");
                         intent.putExtra("address", address);

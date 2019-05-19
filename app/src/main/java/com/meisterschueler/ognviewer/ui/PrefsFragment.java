@@ -70,8 +70,9 @@ public class PrefsFragment extends PreferenceFragment implements SharedPreferenc
                 | key.equals(getString(R.string.key_movingfilter_range_preference))) {
             getActivity().startService(new Intent(getActivity(), OgnService.class));
         } else if (key.equals(getString(R.string.key_tcp_server_active_preference))) {
-            Boolean value = sharedPreferences.getBoolean(getString(R.string.key_tcp_server_active_preference), false);
-            if (value) {
+            Boolean tcpServerActive = sharedPreferences.getBoolean(getString(R.string.key_tcp_server_active_preference), false);
+            Boolean movingFilterActive = sharedPreferences.getBoolean(getString(R.string.key_movingfilter_preference), true);
+            if (tcpServerActive | movingFilterActive) {
                 requestLocationPermission();
             } else {
                 // TCP updates will be stopped when switched back to MapsActivity
