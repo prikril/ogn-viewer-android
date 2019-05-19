@@ -187,6 +187,7 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
                 public void onLocationResult(LocationResult locationResult) {
                     currentLocation = locationResult.getLastLocation();
                     tcpServer.updatePosition(currentLocation);
+                    sendLocationToMap(currentLocation);
                     if (movingFilterLocation == null || movingFilterLocation.distanceTo(currentLocation) > 5000) {
                         movingFilterLocation = currentLocation;
                         restartAprsClient();

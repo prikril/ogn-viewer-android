@@ -50,6 +50,8 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
+import com.google.android.gms.maps.model.Dash;
+import com.google.android.gms.maps.model.Gap;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -78,6 +80,7 @@ import org.ogn.commons.beacon.AircraftType;
 import org.ogn.commons.beacon.ReceiverBeacon;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -971,6 +974,7 @@ public class MapsActivity extends BaseActivity implements OnMapReadyCallback,
                 double lat = intent.getDoubleExtra("lat", 0);
                 double lon = intent.getDoubleExtra("lon", 0);
                 currentLocation = new LatLng(lat, lon);
+                updateRangeCircle();
             }
         };
         LocalBroadcastManager.getInstance(this).registerReceiver((locationReceiver), new IntentFilter(AppConstants.INTENT_LOCATION));
@@ -1112,24 +1116,24 @@ public class MapsActivity extends BaseActivity implements OnMapReadyCallback,
             if (mMap == null) {
                 return;
             } else {
-                rangeCircle = mMap.addCircle(new CircleOptions().center(new LatLng(0, 0)).radius(1));
+                rangeCircle = mMap.addCircle(new CircleOptions().center(new LatLng(0, 0)).radius(1).strokeColor(Color.RED));
             }
         }
         rangeCircle.setVisible(false);
 
         if (movingFilterActive) {
             if (currentLocation != null) {
+                rangeCircle.setStrokePattern(Arrays.asList(new Dash(20), new Gap(20)));
                 rangeCircle.setCenter(currentLocation);
                 rangeCircle.setRadius(50000);
-                rangeCircle.setStrokeColor(Color.RED);
                 rangeCircle.setVisible(true);
             }
         } else {
             AprsFilterManager.Circle circle = AprsFilterManager.parse(manualFilter);
             if (circle != null) {
+                rangeCircle.setStrokePattern(null);
                 rangeCircle.setCenter(new LatLng(circle.getLat(), circle.getLon()));
                 rangeCircle.setRadius(circle.getRadius() * 1000);
-                rangeCircle.setStrokeColor(Color.RED);
                 rangeCircle.setVisible(true);
             }
         }
