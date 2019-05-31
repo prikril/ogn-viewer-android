@@ -441,12 +441,43 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
         }
     }
 
+    public float getMovingfilterRange() {
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        String moving_filter_range = sharedPreferences.getString(getString(R.string.key_movingfilter_range_preference), getString(R.string.distance_10km));
+
+        float radius = 10000;
+        if (moving_filter_range == getString(R.string.distance_10km)) {
+            radius = 10000;
+        } else if (moving_filter_range == getString(R.string.distance_20km)) {
+            radius = 20000;
+        } else if (moving_filter_range == getString(R.string.distance_30km)) {
+            radius = 30000;
+        } else if (moving_filter_range == getString(R.string.distance_40km)) {
+            radius = 40000;
+        } else if (moving_filter_range == getString(R.string.distance_50km)) {
+            radius = 50000;
+        } else if (moving_filter_range == getString(R.string.distance_60km)) {
+            radius = 60000;
+        } else if (moving_filter_range == getString(R.string.distance_70km)) {
+            radius = 70000;
+        } else if (moving_filter_range == getString(R.string.distance_80km)) {
+            radius = 80000;
+        } else if (moving_filter_range == getString(R.string.distance_90km)) {
+            radius = 90000;
+        } else if (moving_filter_range == getString(R.string.distance_100km)) {
+            radius = 100000;
+        }
+        return radius;
+    }
+
     private void restartAprsClient() {
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         String aprs_server = sharedPreferences.getString(getString(R.string.key_aprsserver_preference), "");
         String manual_filter = sharedPreferences.getString(getString(R.string.key_aprsfilter_preference), "");
         Boolean moving_filter = sharedPreferences.getBoolean(getString(R.string.key_movingfilter_preference), true);
         String moving_filter_range = sharedPreferences.getString(getString(R.string.key_movingfilter_range_preference), getString(R.string.distance_10km));
+
+        float radius = getMovingfilterRange();
 
         if (aprs_server.isEmpty()) {
             aprs_server = getString(R.string.default_aprsserver);
@@ -464,7 +495,7 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
         String aprs_filter;
         if (moving_filter) {
             if (currentLocation != null) {
-                String range_filter = AprsFilterManager.latLngToAprsFilter(currentLocation.getLatitude(), currentLocation.getLongitude(), 10);
+                String range_filter = AprsFilterManager.latLngToAprsFilter(currentLocation.getLatitude(), currentLocation.getLongitude(), radius);
                 String buddy_filter = customAircraftDescriptorProvider.getAprsBudlistFilter();
                 aprs_filter = range_filter + " " + buddy_filter;
             } else {

@@ -156,8 +156,14 @@
     <string name="time_1h">1 h</string>
 
     <string name="distance_10km">10km</string>
-    <string name="distance_25km">25km</string>
+    <string name="distance_20km">20km</string>
+    <string name="distance_30km">30km</string>
+    <string name="distance_40km">40km</string>
     <string name="distance_50km">50km</string>
+    <string name="distance_60km">60km</string>
+    <string name="distance_70km">70km</string>
+    <string name="distance_80km">80km</string>
+    <string name="distance_90km">90km</string>
     <string name="distance_100km">100km</string>
 
     <string name="unit_meters">m</string>

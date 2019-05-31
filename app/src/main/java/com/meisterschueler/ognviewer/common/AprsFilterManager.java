@@ -24,7 +24,7 @@ public class AprsFilterManager {
     }
 
     public static String latLngToAprsFilter(double lat, double lon, double radius) {
-        return String.format(Locale.US, "r/%1$.3f/%2$.3f/%3$.1f", lat, lon, radius);
+        return String.format(Locale.US, "r/%1$.3f/%2$.3f/%3$.1f", lat, lon, radius/1000.0);
     }
 
     public static String latLngToAprsFilter(double lat, double lon) {
