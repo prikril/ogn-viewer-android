@@ -1,5 +1,9 @@
 # OGN Viewer Release Notes
 
+## 1.4.3
+* New: moving filter (issue #9)
+* Enhancement: allow custom APRS server
+
 ## 1.4.2
 * Bugfix: Crash with bad APRS filter (issue #20)
 
