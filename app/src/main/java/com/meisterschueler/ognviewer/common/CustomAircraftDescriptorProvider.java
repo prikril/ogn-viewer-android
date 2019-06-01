@@ -141,10 +141,14 @@ public class CustomAircraftDescriptorProvider implements AircraftDescriptorProvi
     }
 
     public String getAprsBudlistFilter() {
-        String buddies = "b";
+        String buddies = "";
         for (CustomAircraftDescriptor cad : aircraftDescriptorMap.values()) {
             buddies += "/FLR" + cad.address + "/ICA" + cad.address + "/OGN" + cad.address + "/FNT" + cad.address;
         }
-        return buddies;
+        if (buddies.isEmpty()) {
+            return "";
+        } else {
+            return "b" + buddies;
+        }
     }
 }
