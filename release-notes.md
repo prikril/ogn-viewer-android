@@ -1,5 +1,9 @@
 # OGN Viewer Release Notes
 
+## 1.4.4
+* Improvement: Updated ogn library (reduces power consumption)
+* Bugfix: Crash (issue #25)
+
 ## 1.4.3
 * New: moving filter (issue #9)
 * Enhancement: allow custom APRS server

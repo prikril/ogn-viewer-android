@@ -1122,7 +1122,7 @@ public class MapsActivity extends BaseActivity implements OnMapReadyCallback,
         rangeCircle.setVisible(false);
 
         if (movingFilterActive) {
-            if (currentLocation != null) {
+            if (currentLocation != null && ognService != null) {
                 float radius = ognService.getMovingfilterRange();
 
                 rangeCircle.setStrokePattern(Arrays.asList(new Dash(20), new Gap(20)));
