@@ -8,7 +8,7 @@ android {
         applicationId "com.meisterschueler.ognviewer"
         minSdkVersion 19
         targetSdkVersion 27
-        versionCode 45
+        versionCode 46
         versionName "1.4.4"
     }
 
