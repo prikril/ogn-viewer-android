@@ -95,7 +95,7 @@ public class CustomAircraftDescriptorProvider implements AircraftDescriptorProvi
             }
             return file.getCanonicalPath();
         } catch (IOException ex) {
-            Timber.wtf("Error while exporting aircraft to file. " + ex.getMessage());
+            Timber.wtf("Error while exporting aircraft to file. %s", ex.getMessage());
             return null;
         }
     }
@@ -122,7 +122,7 @@ public class CustomAircraftDescriptorProvider implements AircraftDescriptorProvi
             }
             return importCount;
         } catch (IOException ex) {
-            Timber.wtf("Error while importing aircraft from file. " + ex.getMessage());
+            Timber.wtf("Error while importing aircraft from file. %s", ex.getMessage());
             return -1;
         }
     }

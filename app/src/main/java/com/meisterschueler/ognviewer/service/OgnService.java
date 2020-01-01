@@ -16,7 +16,6 @@ import android.os.Binder;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.Looper;
-import android.preference.PreferenceManager;
 import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
@@ -24,6 +23,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.preference.PreferenceManager;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
@@ -166,7 +166,7 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
                 // Show an explanation to the user *asynchronously* -- don't block
                 // this thread waiting for the user's response! After the user
                 // sees the explanation, try again to request the permission.
-                Timber.d("Location permisson already denied");
+                Timber.d("Location permission already denied");
                 // ask again? in activity? 2018-03-23
                 // onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults)
                 // https://developer.android.com/training/permissions/requesting.html#java
@@ -178,7 +178,7 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
             return;
         } else {
             // Permission has already been granted
-            Timber.d("Location permisson granted");
+            Timber.d("Location permission granted");
         }
 
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(context);
@@ -442,7 +442,7 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
         }
     }
 
-    public float getMovingfilterRange() {
+    public float getMovingFilterRange() {
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         String moving_filter_range = sharedPreferences.getString(getString(R.string.key_movingfilter_range_preference), getString(R.string.distance_10km));
 
@@ -478,7 +478,7 @@ public class OgnService extends Service implements AircraftBeaconListener, Recei
         Boolean moving_filter = sharedPreferences.getBoolean(getString(R.string.key_movingfilter_preference), true);
         String moving_filter_range = sharedPreferences.getString(getString(R.string.key_movingfilter_range_preference), getString(R.string.distance_10km));
 
-        float radius = getMovingfilterRange();
+        float radius = getMovingFilterRange();
 
         if (aprs_server.isEmpty()) {
             aprs_server = getString(R.string.default_aprsserver);
