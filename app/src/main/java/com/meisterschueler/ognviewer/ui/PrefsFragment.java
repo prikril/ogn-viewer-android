@@ -8,8 +8,8 @@ import android.os.Bundle;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.preference.SwitchPreference;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import com.meisterschueler.ognviewer.service.OgnService;
 import com.meisterschueler.ognviewer.R;
@@ -210,7 +210,7 @@ public class PrefsFragment extends PreferenceFragment implements SharedPreferenc
             ActivityCompat.requestPermissions(getActivity(), new String[]{fineLocationPermissionString}, AppConstants.REQUEST_CODE_LOCATION_TCP_UPDATES);
         } else {
             // Permission has already been granted
-            Timber.d("Location permisson granted");
+            Timber.d("Location permission granted");
         }
     }
 
